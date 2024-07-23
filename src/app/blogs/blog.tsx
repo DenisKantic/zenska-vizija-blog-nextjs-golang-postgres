@@ -1,31 +1,9 @@
 'use client'
 import React, { useState, useEffect } from 'react'
-import { doc, getDoc } from 'firebase/firestore'
-import { db } from '@/app/FirebaseConfig'
 import Image from 'next/image'
-import BlogNavigation from './blogNavigation'
-async function fetchDataFirestore(blogId: string) {
-  const docRef = doc(db, 'blog', blogId)
-  const docSnap = await getDoc(docRef)
-  if (docSnap.exists()) {
-    return docSnap.data()
-  } else {
-    return null
-  }
-}
-export default function Blog({ id, blogData }: any) {
-  const blogId = id
-  console.log(blogData)
-  const [blog, setBlog] = useState<any>(null)
 
-  console.log('Im from params ' + blogId)
-  const fetchBlog = async () => {
-    return await fetchDataFirestore(blogId)
-  }
-
-  useEffect(() => {
-    fetchBlog().then(setBlog)
-  }, [])
+export default function Blog() {
+  const blog = null
 
   return (
     <>
@@ -53,11 +31,6 @@ export default function Blog({ id, blogData }: any) {
                 alt="blog image"
               />
             </div>
-            <BlogNavigation
-              blogId={blogId.blogId}
-              blog={blog}
-              setBlog={setBlog}
-            />
           </div>
         </div>
       )}
