@@ -1,6 +1,8 @@
 package uploadImages
 
 import (
+	"encoding/json"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -22,6 +24,7 @@ func TestingFunction(w http.ResponseWriter, r *http.Request) {
 	}
 
 	files := r.MultipartForm.File["images"]
+	var filePaths []string
 
 	for _, file := range files {
 		// open the uploaded file
@@ -42,5 +45,41 @@ func TestingFunction(w http.ResponseWriter, r *http.Request) {
 		defer dst.Close()
 
 		// copy the uploaded file
+
+		// Copy the uploaded file to the server
+		_, err = io.Copy(dst, src)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Add the file path to the array
+		filePaths = append(filePaths, filepath.Join("uploads", file.Filename))
 	}
+
+	// Retrieve all file paths from the uploads directory
+	filesInDir, err := os.ReadDir("uploads")
+	if err != nil {
+		http.Error(w, "Error reading uploads directory", http.StatusInternalServerError)
+		return
+	}
+
+	var allFilePaths []string
+	for _, file := range filesInDir {
+		if !file.IsDir() {
+			allFilePaths = append(allFilePaths, filepath.Join("uploads", file.Name()))
+		}
+	}
+
+	// Convert the array to JSON
+	jsonResponse, err := json.Marshal(allFilePaths)
+	if err != nil {
+		http.Error(w, "Error creating JSON response", http.StatusInternalServerError)
+		return
+	}
+
+	// Set content type and return the JSON response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonResponse)
 }
