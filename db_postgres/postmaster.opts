@@ -1,0 +1,1 @@
+/usr/lib/postgresql/12/bin/postgres "-D" "/home/skyler/Documents/zenska-vizija-nextjs-golang-postgres/db_postgres" "-c" "config_file=/etc/postgresql/12/main/postgresql.conf"
