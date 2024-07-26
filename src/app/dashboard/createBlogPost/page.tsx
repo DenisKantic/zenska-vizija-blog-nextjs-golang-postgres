@@ -1,19 +1,16 @@
 'use client'
-import React, { ChangeEvent, useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import MyRichTextEditor from './TextEditor'
-import { TbCameraPlus } from 'react-icons/tb'
 import { useRouter } from 'next/navigation'
 import { useTransition } from 'react'
 import Image from 'next/image'
+import { SaveBlogToDB } from '../../../../actions/saveBlogData'
 
 const CreatePost = () => {
   const [title, setTitle] = useState('')
   const [text, setText] = useState('')
-  const [image, setImage] = useState<File | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
-  const [location, setLocation] = useState<string>('Izaberite')
-  const [dropdown, setDropdown] = useState<boolean>(false)
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
   const [visible, setVisible] = useState<boolean>(false)
   const [inputKey, setInputKey] = useState<number>(0) // Add key state to force input re-render
@@ -54,14 +51,14 @@ const CreatePost = () => {
     }
   }, [previewUrls])
 
-  const handleRemoveImage = (index: number) => {
-    // Remove the file and preview URL at the given index
-    const updatedFiles = selectedFiles.filter((_, i) => i !== index)
-    const updatedUrls = previewUrls.filter((_, i) => i !== index)
+  // const handleRemoveImage = (index: number) => {
+  //   // Remove the file and preview URL at the given index
+  //   const updatedFiles = selectedFiles.filter((_, i) => i !== index)
+  //   const updatedUrls = previewUrls.filter((_, i) => i !== index)
 
-    setSelectedFiles(updatedFiles)
-    setPreviewUrls(updatedUrls)
-  }
+  //   setSelectedFiles(updatedFiles)
+  //   setPreviewUrls(updatedUrls)
+  // }
 
   // Clean up object URLs to avoid memory leaks
   useEffect(() => {
@@ -70,18 +67,24 @@ const CreatePost = () => {
     }
   }, [previewUrls])
 
-  // const handleRemoveImage = () => {
-  //   // Clear the file and preview URL
-  //   setSelectedFiles([])
-  //   setPreviewUrls([])
-  //   setError(null) // Clear any previous error
-  //   setVisible(false)
-  //   setFileName(null) // Clear file name
-  //   setInputKey((prevKey) => prevKey + 1) // Force input re-render by changing key
-  // }
+  const handleRemoveImage = () => {
+    // Clear the file and preview URL
+    setSelectedFiles([])
+    setPreviewUrls([])
+    setError(null) // Clear any previous error
+    setVisible(false)
+    setFileName(null) // Clear file name
+    setInputKey((prevKey) => prevKey + 1) // Force input re-render by changing key
+  }
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    const formElement = e?.target as HTMLFormElement
+    if (formElement) {
+      const formData = new FormData(formElement)
+      const response = await SaveBlogToDB(formData, text)
+    }
   }
 
   return (
@@ -98,6 +101,7 @@ const CreatePost = () => {
         <p className="text-xl mt-5">Naslov objave</p>
         <input
           type="text"
+          name="title"
           required
           placeholder="Unesite Vaš naslov"
           className="mt-5 text-[#C86DD7] text-xl rounded-full outline-none
@@ -108,28 +112,10 @@ const CreatePost = () => {
         <br />
 
         <p className="text-xl">Ubacite sliku</p>
-        <label
-          className="mt-5 cursor-pointer rounded-full bg-white text-[#C86DD7] border-[2px] border-[#F93EDF]
-          xxs:text-sm xxs:p-2 xxs:w-full sm:p-7 sm:text-xl sm:py-3 lg:w-[80%] xl:w-[50%]"
-        >
-          {image == null ? <TbCameraPlus className="mx-auto" /> : image.name}
-          <input
-            type="file"
-            accept="image/png, image/jpg, image/jpeg"
-            required
-            onChange={(e: any) => handleFileChange(e)}
-            className="hidden"
-          />
-        </label>
-        <p
-          className={error ? 'block font-bold text-lg text-red-500' : 'hidden'}
-        >
-          **Morate unijeti sliku
-        </p>
 
         <div
-          className="btn bg-[#2F5382] text-md text-white rounded-xl
-                           hover:bg-white hover:border-[#2F5382] hover:text-[#2F5382]"
+          className="mt-5 cursor-pointer rounded-full bg-white text-[#C86DD7] border-[2px] border-[#F93EDF]
+          xxs:text-sm xxs:p-2 xxs:w-full sm:p-7 sm:text-xl sm:py-3 lg:w-[80%] xl:w-[50%]"
         >
           <label
             htmlFor="fileUpload"
@@ -144,7 +130,7 @@ const CreatePost = () => {
             multiple
             type="file"
             id="fileUpload"
-            name="files"
+            name="images"
             accept="image/*"
             onChange={handleFileChange}
             className="hidden"
@@ -171,7 +157,7 @@ const CreatePost = () => {
               />
               <button
                 type="button"
-                // onClick={handleRemoveImage}
+                onChange={handleRemoveImage}
                 className="absolute top-0 bg-red-600 right-0 text-white rounded-full w-10 h-10 flex items-center justify-center
                             hover:bg-red-300 hover:text-black"
               >

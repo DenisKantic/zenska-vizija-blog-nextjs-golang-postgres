@@ -64,6 +64,8 @@ func UploadImages(w http.ResponseWriter, r *http.Request) {
 
 	files := r.MultipartForm.File["images"]
 
+	fmt.Println("Extracted files", files)
+
 	var filePaths []string
 
 	for _, file := range files {
