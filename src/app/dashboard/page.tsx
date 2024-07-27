@@ -1,26 +1,40 @@
-"use client"
-import React, { useEffect } from 'react'
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { useAuth } from "@/app/AuthContext";
-
+import Link from "next/link"
 
 const Dashboard = () => {
 
-  const router = useRouter();
-  const { user, logout } = useAuth();
-  
   return (
-    <div className='bg-[#FEF1FD] flex h-screen w-full'>
-      {user ? (
-      <div className='flex-1 p-5'>
-        <h1 className='text-4xl'>Dobrodosli u svoj dashboard!</h1>
-        <Link href="/dashboard/settings" className='px-4 py-3 bg-red-400 text-white font-bold'>Profile</Link>
-        <p>Izaberite jednu od sljedecih opcija:</p>
-        <button className='px-4 py-3 bg-red-400' onClick={()=>logout}>Odjava</button>
-        </div>
-        ) : ( <> {router.push('/login')}</> )}
-       
+    <div className='bg-[#FEF1FD] flex h-full w-full overflow-y-scroll'>
+      <div className='flex-1 p-5 h-full'>
+        <h1 className='text-4xl'>Dobrodošli u svoj dashboard!</h1>
+          <p className="text-xl py-10">Izaberite jednu od sljedećih opcija:</p>
+          <div className="w-[90%]  grid gap-10 pt-10 text-white font-bold tracking-wide text-3xl text-center 
+                          xxs:grid-rows-2 xxs:h-auto md:grid-cols-2 md:h-[50vh]">
+            
+            <Link href="/" className="w-full p-5 h-[200px] bg-red-400 flex justify-center items-center rounded-xl
+                                    hover:bg-red-200 hover:text-red-600">
+                Nazad na početnu stranicu
+            </Link>
+
+            <Link href="/dashboard/createPost"  
+            className="w-full p-5 h-[200px] bg-blue-400 flex justify-center items-center rounded-xl
+                      hover:bg-blue-200 hover:text-blue-500">
+               Kreiraj objavu
+            </Link>
+
+            <Link href="/dashboard/blog"  
+            className="w-full h-[200px] p-5 bg-orange-400 flex justify-center items-center rounded-xl
+                        hover:bg-orange-200 hover:text-orange-500">
+                Moje objave
+            </Link>
+
+            <Link href="/dashboard/event"  
+            className="w-full h-[200px] p-5 bg-pink-400 flex justify-center items-center rounded-xl
+                        hover:bg-pink-200 hover:text-pink-500">
+                Moji događaji
+            </Link>
+
+          </div>
+       </div>
     </div>
   )
 }

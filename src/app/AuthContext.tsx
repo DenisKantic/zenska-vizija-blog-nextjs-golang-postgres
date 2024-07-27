@@ -5,6 +5,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import { auth } from "./FirebaseConfig";
 
@@ -25,8 +26,8 @@ export const AuthContextProvider = ({
       if (user) {
         setUser({
           uid: user.uid,
-          email: user.email
-        }); 
+          email: user.email,
+        });
       } else {
         setUser(null);
       }
@@ -40,7 +41,6 @@ export const AuthContextProvider = ({
     return createUserWithEmailAndPassword(auth, email, password);
   };
 
-
   const login = (email: string, password: string) => {
     return signInWithEmailAndPassword(auth, email, password);
   };
@@ -50,8 +50,16 @@ export const AuthContextProvider = ({
     await signOut(auth);
   };
 
+  const forgotPassword = (email: string) => {
+    return sendPasswordResetEmail(auth, email, {
+      url: "http://localhost:3000/login",
+    });
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, signup }}>
+    <AuthContext.Provider
+      value={{ user, login, logout, signup, forgotPassword }}
+    >
       {loading ? null : children}
     </AuthContext.Provider>
   );

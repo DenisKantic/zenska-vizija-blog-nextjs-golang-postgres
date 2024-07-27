@@ -9,6 +9,7 @@ import { IoIosCloseCircleOutline } from "react-icons/io";
 import { CiLogout } from "react-icons/ci";
 import { useRouter } from 'next/navigation';
 import { useAuth } from "@/app/AuthContext";
+import { FaHome } from "react-icons/fa";
 
 
 const Navbar = () => {
@@ -43,11 +44,18 @@ const Navbar = () => {
             </div>
 
             <div className={ nav ? 'flex flex-col justify-center items-center' : 'w-full'}>
-                <Link href='/dashboard/settings' 
+            <Link href='/' 
                 className='flex flex-row items-center justify-start text-xl cursor-pointer hover:text-red-400'>
-                    <FaRegUser /> 
-                    <p className={nav ? "hidden" : 'pl-10'}>Postavke profila</p>
+                    <FaHome />
+                    <p className={nav ? "hidden" : 'pl-10'}>Naslovna</p>
                 </Link>
+
+              <Link href='/dashboard' 
+                className='flex flex-row items-center justify-start text-xl cursor-pointer hover:text-red-400 pt-7'>
+                    <FaRegUser /> 
+                    <p className={nav ? "hidden" : 'pl-10'}>Dashboard</p>
+                </Link>
+                  
 
                 <Link href="/dashboard/createPost" className='flex flex-row items-center justify-start pt-7 text-xl cursor-pointer hover:text-red-400'>
                     <IoCreate /> 
@@ -59,9 +67,9 @@ const Navbar = () => {
                     <p className={nav ? "hidden" : 'pl-10'}>Moje objave</p>
                 </Link>
 
-                <Link href="/dashboard/events" className='flex flex-row items-center justify-start pt-7 text-xl cursor-pointer hover:text-red-400'>
+                <Link href="/dashboard/event" className='flex flex-row items-center justify-start pt-7 text-xl cursor-pointer hover:text-red-400'>
                     <FaFileAlt /> 
-                    <p className={nav ? "hidden" : 'pl-10'}>Moji dogadjaji</p>
+                    <p className={nav ? "hidden" : 'pl-10'}>Moji događaji</p>
                 </Link>
 
                 <Link href="/login" onClick={()=> { logout(); router.push('/login')}} className='flex flex-row items-center pt-7 text-xl cursor-pointer hover:text-red-400'>
