@@ -5,6 +5,14 @@ import { useRouter } from 'next/navigation'
 import { useTransition } from 'react'
 import Image from 'next/image'
 import { SaveBlogToDB } from '../../../../actions/saveBlogData'
+// Import Swiper React components
+import { Swiper, SwiperSlide } from 'swiper/react'
+import { Navigation, Pagination } from 'swiper/modules'
+
+// Import Swiper styles
+import 'swiper/css'
+import 'swiper/css/navigation'
+import 'swiper/css/pagination'
 
 const CreatePost = () => {
   const [title, setTitle] = useState('')
@@ -35,7 +43,7 @@ const CreatePost = () => {
         setError(null)
       }
 
-      const newFiles = files.slice(0, 3 - selectedFiles.length)
+      const newFiles = files.slice(0, 5 - selectedFiles.length)
       setSelectedFiles((prevFiles) => [...prevFiles, ...newFiles])
 
       // Generate preview URLs
@@ -55,9 +63,9 @@ const CreatePost = () => {
   //   // Remove the file and preview URL at the given index
   //   const updatedFiles = selectedFiles.filter((_, i) => i !== index)
   //   const updatedUrls = previewUrls.filter((_, i) => i !== index)
-
   //   setSelectedFiles(updatedFiles)
   //   setPreviewUrls(updatedUrls)
+  //   setInputKey((prevKey) => prevKey + 1)
   // }
 
   // Clean up object URLs to avoid memory leaks
@@ -141,30 +149,49 @@ const CreatePost = () => {
         <div
           className={
             visible
-              ? 'flex gap-5 mt-4 w-full border-dashed border-4 border-gray-400 z-2'
+              ? 'flex max-h-[70vh] gap-5 mt-4 w-full border-dashed border-4 border-gray-400 z-2 overflow-hidden'
               : 'hidden'
           }
         >
-          {previewUrls.map((url, index) => (
-            <div key={index} className="relative m-2 w-full">
-              <Image
-                height={200}
-                width={200}
-                key={index}
-                src={url}
-                alt={`Preview ${index}`}
-                className="h-[50vh] w-full object-contain z-2 m-2"
-              />
-              <button
-                type="button"
-                onChange={handleRemoveImage}
-                className="absolute top-0 bg-red-600 right-0 text-white rounded-full w-10 h-10 flex items-center justify-center
-                            hover:bg-red-300 hover:text-black"
-              >
-                <p className="text-2xl w-full font-bold">&times;</p>
-              </button>
-            </div>
-          ))}
+          <Swiper
+            modules={[Navigation, Pagination]}
+            spaceBetween={0}
+            keyboard
+            pagination={{ clickable: true }}
+            navigation={{
+              prevEl: '.swiper-button-prev', // Custom class for previous button
+              nextEl: '.swiper-button-next', // Custom class for next button
+            }} // Enable navigation
+            slidesPerView={1}
+            scrollbar={{ draggable: true }}
+            onSlideChange={() => console.log('slide change')}
+            onSwiper={(swiper) => console.log(swiper)}
+          >
+            {/* Generate Carousel Items */}
+            {previewUrls.map((url, index) => (
+              <SwiperSlide className="w-full h-[50vh]" key={index}>
+                <Image
+                  src={url}
+                  alt={`Preview ${index}`}
+                  className="w-full h-full object-contain"
+                  height={50} // Adjust height as needed
+                  width={50} // Adjust width as needed
+                />
+                {/* Optional: Add a remove button */}
+                <button
+                  type="button"
+                  onClick={() => handleRemoveImage()} // Pass index to remove specific image
+                  className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-10 h-10 flex items-center justify-center
+                      hover:bg-red-300 hover:text-black"
+                >
+                  <p className="text-2xl w-full font-bold">&times;</p>
+                </button>
+              </SwiperSlide>
+            ))}
+            {/* Custom Navigation Buttons */}
+            <div className="swiper-button-prev bg-white text-white p-6 hover:bg-gray-200 btn rounded-full absolute top-1/2 left-2"></div>
+            <div className="swiper-button-next bg-white text-white p-6 hover:bg-gray-200 btn rounded-full absolute top-1/2 right-2"></div>
+          </Swiper>
         </div>
 
         <p className="text-xl mb-5 mt-5">Tekst objave</p>
