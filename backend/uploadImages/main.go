@@ -1,14 +1,53 @@
 package uploadImages
 
 import (
+	"database/sql"
 	"encoding/json"
+	"fmt"
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
-func TestingFunction(w http.ResponseWriter, r *http.Request) {
+var (
+	DB_USER     string
+	DB_PASSWORD string
+	DB_NAME     string
+	DB_HOST     string
+	DB_PORT     string
+)
+
+func init() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
+	}
+
+	DB_USER = os.Getenv("DB_USER")
+	DB_PASSWORD = os.Getenv("DB_PASSWORD")
+	DB_NAME = os.Getenv("DB_NAME")
+	DB_HOST = os.Getenv("DB_HOST")
+	DB_PORT = os.Getenv("DB_PORT")
+}
+
+func dbConn() (*sql.DB, error) {
+	psqlInfo := "host=%s port=%s user=%s password=%s dbname=%s sslmode=disable"
+	psqlInfo = fmt.Sprintf(psqlInfo, DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME)
+	fmt.Println("Connection string:", psqlInfo)
+
+	db, err := sql.Open("postgres", psqlInfo)
+	if err != nil {
+		return nil, fmt.Errorf("error opening connection: %w", err)
+	}
+	return db, nil
+}
+
+func UploadImages(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
 	w.Header().Set("Access-Control-Allow-Methods", "POST")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
@@ -24,6 +63,9 @@ func TestingFunction(w http.ResponseWriter, r *http.Request) {
 	}
 
 	files := r.MultipartForm.File["images"]
+
+	fmt.Println("Extracted files", files)
+
 	var filePaths []string
 
 	for _, file := range files {
@@ -37,7 +79,8 @@ func TestingFunction(w http.ResponseWriter, r *http.Request) {
 		defer src.Close()
 
 		// create a new file in the server
-		dst, err := os.Create(filepath.Join("uploads", file.Filename))
+		dstPath := filepath.Join("uploads", file.Filename)
+		dst, err := os.Create(dstPath)
 		if err != nil {
 			http.Error(w, "Error creating a new file in the server", http.StatusInternalServerError)
 			return
@@ -53,33 +96,40 @@ func TestingFunction(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Add the file path to the array
-		filePaths = append(filePaths, filepath.Join("uploads", file.Filename))
+		// collect file paths
+		filePaths = append(filePaths, dstPath)
 	}
-
-	// Retrieve all file paths from the uploads directory
-	filesInDir, err := os.ReadDir("uploads")
+	// insert the file paths into the database
+	filePathsStr := "{" + strings.Join(filePaths, ",") + "}"
+	err = saveFilePathToDB(filePathsStr)
 	if err != nil {
-		http.Error(w, "Error reading uploads directory", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	var allFilePaths []string
-	for _, file := range filesInDir {
-		if !file.IsDir() {
-			allFilePaths = append(allFilePaths, filepath.Join("uploads", file.Name()))
-		}
-	}
-
-	// Convert the array to JSON
-	jsonResponse, err := json.Marshal(allFilePaths)
-	if err != nil {
-		http.Error(w, "Error creating JSON response", http.StatusInternalServerError)
-		return
+	// prepare the JSON response
+	response := map[string]interface{}{
+		"message":    "Files uploaded and paths stored successfully",
+		"file_paths": filePaths, // Add file paths to the response
 	}
 
 	// Set content type and return the JSON response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(jsonResponse)
+	json.NewEncoder(w).Encode(response)
+}
+
+func saveFilePathToDB(filePaths string) error {
+	db, err := dbConn()
+	if err != nil {
+		return fmt.Errorf("error connecting to database: %v", err)
+	}
+	defer db.Close()
+
+	_, err = db.Exec("INSERT INTO blogs (image_paths) VALUES ($1)", filePaths)
+	if err != nil {
+		return fmt.Errorf("error saving file to database: %v", err)
+	}
+
+	return nil
 }

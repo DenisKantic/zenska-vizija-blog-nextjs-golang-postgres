@@ -16,7 +16,7 @@ func setupRoutes() {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/uploadImages", uploadImages.TestingFunction)
+	mux.HandleFunc("/uploadImages", uploadImages.UploadImages)
 	mux.HandleFunc("/", HelloHandler)
 	log.Fatal(http.ListenAndServe(":8080", mux))
 }
