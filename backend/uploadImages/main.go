@@ -63,6 +63,11 @@ func UploadImages(w http.ResponseWriter, r *http.Request) {
 	}
 
 	files := r.MultipartForm.File["images"]
+	title := r.FormValue("title")
+	description := r.FormValue("description")
+
+	fmt.Println("Title:", title)
+	fmt.Println("Description:", description)
 
 	fmt.Println("Extracted files", files)
 
@@ -79,7 +84,7 @@ func UploadImages(w http.ResponseWriter, r *http.Request) {
 		defer src.Close()
 
 		// create a new file in the server
-		dstPath := filepath.Join("uploads", file.Filename)
+		dstPath := filepath.Join("uploads", file.Filename) // FILE NAME FOLDER
 		dst, err := os.Create(dstPath)
 		if err != nil {
 			http.Error(w, "Error creating a new file in the server", http.StatusInternalServerError)
@@ -101,7 +106,7 @@ func UploadImages(w http.ResponseWriter, r *http.Request) {
 	}
 	// insert the file paths into the database
 	filePathsStr := "{" + strings.Join(filePaths, ",") + "}"
-	err = saveFilePathToDB(filePathsStr)
+	err = saveFilePathToDB(filePathsStr, title, description)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -119,17 +124,76 @@ func UploadImages(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func saveFilePathToDB(filePaths string) error {
+func saveFilePathToDB(filePaths string, title string, description string) error {
 	db, err := dbConn()
 	if err != nil {
 		return fmt.Errorf("error connecting to database: %v", err)
 	}
 	defer db.Close()
 
-	_, err = db.Exec("INSERT INTO blogs (image_paths) VALUES ($1)", filePaths)
+	_, err = db.Exec("INSERT INTO blogs (image_paths, title, description) VALUES ($1,$2,$3)", filePaths, title, description)
 	if err != nil {
 		return fmt.Errorf("error saving file to database: %v", err)
 	}
 
 	return nil
+}
+
+// GetAllBlogs handles the GET request to retrieve all blog entries
+func GetAllBlogs(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	w.Header().Set("Access-Control-Allow-Methods", "GET")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+	if r.Method == http.MethodOptions {
+		return
+	}
+
+	db, err := dbConn()
+	if err != nil {
+		http.Error(w, "Error connecting to database", http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT id, title, description, image_paths, created_at, updated_at FROM blogs")
+	if err != nil {
+		http.Error(w, "Error querying database"+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var blogs []map[string]interface{}
+
+	for rows.Next() {
+		var id int
+		var title, description, imagePaths string
+		var dateCreated, updatedAt string
+
+		err := rows.Scan(&id, &title, &description, &imagePaths, &dateCreated, &updatedAt)
+		if err != nil {
+			http.Error(w, "Error scanning row", http.StatusInternalServerError)
+			return
+		}
+
+		blog := map[string]interface{}{
+			"id":           id,
+			"title":        title,
+			"description":  description,
+			"image_paths":  imagePaths,
+			"date_created": dateCreated,
+			"updated_at":   updatedAt,
+		}
+
+		blogs = append(blogs, blog)
+	}
+
+	if err := rows.Err(); err != nil {
+		http.Error(w, "Error with rows", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(blogs)
 }
