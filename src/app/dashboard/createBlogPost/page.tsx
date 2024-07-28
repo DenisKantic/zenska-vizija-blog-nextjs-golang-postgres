@@ -8,6 +8,7 @@ import { SaveBlogToDB } from '../../../../actions/saveBlogData'
 // Import Swiper React components
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Pagination } from 'swiper/modules'
+import { toast } from 'react-toastify' // Import react-toastify
 
 // Import Swiper styles
 import 'swiper/css'
@@ -91,7 +92,13 @@ const CreatePost = () => {
     const formElement = e?.target as HTMLFormElement
     if (formElement) {
       const formData = new FormData(formElement)
-      const response = await SaveBlogToDB(formData, text)
+      const result = await SaveBlogToDB(formData, text)
+
+      if (result.success) {
+        toast.success('Objava uspješno kreirana!')
+      } else {
+        toast.error('Desila se greška')
+      }
     }
   }
 
@@ -110,7 +117,6 @@ const CreatePost = () => {
         <input
           type="text"
           name="title"
-          required
           placeholder="Unesite Vaš naslov"
           className="mt-5 text-[#C86DD7] text-xl rounded-full outline-none
           hover:outline-1 hover:outline-[#F93EDF] focus:outline-[#AC009B]
