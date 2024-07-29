@@ -197,3 +197,37 @@ func GetAllBlogs(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(blogs)
 }
+
+func DeleteBlog(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	w.Header().Set("Access-Control-Allow-Methods", "DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+	if r.Method == http.MethodOptions {
+		return
+	}
+
+	// Extract ID from URL path
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		http.Error(w, "Missing ID", http.StatusBadRequest)
+		return
+	}
+
+	db, err := dbConn()
+	if err != nil {
+		http.Error(w, "Error connecting to database", http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	rows, err := db.Query("DELETE FROM blogs WHERE id = $1", id)
+	if err != nil {
+		http.Error(w, "Error querying database"+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	w.WriteHeader(http.StatusOK)
+
+}
