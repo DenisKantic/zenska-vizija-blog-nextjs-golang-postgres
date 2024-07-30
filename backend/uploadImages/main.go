@@ -3,6 +3,7 @@ package uploadImages
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -11,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
 
@@ -21,6 +23,15 @@ var (
 	DB_HOST     string
 	DB_PORT     string
 )
+
+type Blog struct {
+	ID          int    `json:"id"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	ImagePaths  string `json:"image_paths"`
+	CreatedAt   string `json:"created_at"`
+	UpdatedAt   string `json:"updated_at"`
+}
 
 func init() {
 	err := godotenv.Load()
@@ -65,6 +76,11 @@ func UploadImages(w http.ResponseWriter, r *http.Request) {
 	files := r.MultipartForm.File["images"]
 	title := r.FormValue("title")
 	description := r.FormValue("description")
+	var slug = title
+	slug = strings.ToLower(title)
+	slug = strings.ReplaceAll(title, " ", "-")
+	re := regexp.MustCompile(`[^a-z0-9-]`)
+	slug = re.ReplaceAllString(slug, "")
 
 	fmt.Println("Title:", title)
 	fmt.Println("Description:", description)
@@ -106,7 +122,7 @@ func UploadImages(w http.ResponseWriter, r *http.Request) {
 	}
 	// insert the file paths into the database
 	filePathsStr := "{" + strings.Join(filePaths, ",") + "}"
-	err = saveFilePathToDB(filePathsStr, title, description)
+	err = saveFilePathToDB(filePathsStr, title, description, slug)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -124,14 +140,14 @@ func UploadImages(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func saveFilePathToDB(filePaths string, title string, description string) error {
+func saveFilePathToDB(filePaths string, title string, description string, slug string) error {
 	db, err := dbConn()
 	if err != nil {
 		return fmt.Errorf("error connecting to database: %v", err)
 	}
 	defer db.Close()
 
-	_, err = db.Exec("INSERT INTO blogs (image_paths, title, description) VALUES ($1,$2,$3)", filePaths, title, description)
+	_, err = db.Exec("INSERT INTO blogs (image_paths, title, description, slug) VALUES ($1,$2,$3, $4)", filePaths, title, description, slug)
 	if err != nil {
 		return fmt.Errorf("error saving file to database: %v", err)
 	}
@@ -156,7 +172,7 @@ func GetAllBlogs(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	rows, err := db.Query("SELECT id, title, description, image_paths, created_at, updated_at FROM blogs ORDER BY created_at DESC")
+	rows, err := db.Query("SELECT id, title, description, image_paths, created_at, updated_at, slug FROM blogs ORDER BY created_at DESC")
 	if err != nil {
 		http.Error(w, "Error querying database"+err.Error(), http.StatusInternalServerError)
 		return
@@ -169,8 +185,9 @@ func GetAllBlogs(w http.ResponseWriter, r *http.Request) {
 		var id int
 		var title, description, imagePaths string
 		var dateCreated, updatedAt string
+		var slug string
 
-		err := rows.Scan(&id, &title, &description, &imagePaths, &dateCreated, &updatedAt)
+		err := rows.Scan(&id, &title, &description, &imagePaths, &dateCreated, &updatedAt, &slug)
 		if err != nil {
 			http.Error(w, "Error scanning row", http.StatusInternalServerError)
 			return
@@ -183,6 +200,7 @@ func GetAllBlogs(w http.ResponseWriter, r *http.Request) {
 			"image_paths":  imagePaths,
 			"date_created": dateCreated,
 			"updated_at":   updatedAt,
+			"slug":         slug,
 		}
 
 		blogs = append(blogs, blog)
@@ -229,5 +247,51 @@ func DeleteBlog(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	w.WriteHeader(http.StatusOK)
+
+}
+
+func GetOneItem(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	w.Header().Set("Access-Control-Allow-Methods", "GET")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+	if r.Method == http.MethodOptions {
+		return
+	}
+
+	slug := r.URL.Query().Get("slug")
+	var blog Blog
+
+	if slug == "" {
+		http.Error(w, "Missing slug", http.StatusBadRequest)
+		return
+	}
+
+	db, err := dbConn()
+	if err != nil {
+		http.Error(w, "Error connecting to database", http.StatusInternalServerError)
+		return
+	}
+
+	defer db.Close()
+
+	err = db.QueryRow("SELECT id, title, description, image_paths, created_at, updated_at FROM blogs WHERE slug = $1", slug).
+		Scan(&blog.ID, &blog.Title, &blog.Description, &blog.ImagePaths, &blog.CreatedAt, &blog.UpdatedAt)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			http.Error(w, "Item not found", http.StatusNotFound)
+			return
+		} else {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	if err := json.NewEncoder(w).Encode(blog); err != nil {
+		http.Error(w, "Failed to encode item", http.StatusInternalServerError)
+	}
 
 }

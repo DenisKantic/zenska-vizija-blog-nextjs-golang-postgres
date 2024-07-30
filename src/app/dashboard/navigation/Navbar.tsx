@@ -21,8 +21,8 @@ const Navbar = () => {
     <div
       className={
         nav
-          ? 'h-[95vh] w-[100px] bg-white shadow-md flex flex-col justify-start items-center rounded-xl p-1 xxs:hidden md:block'
-          : 'h-[95vh] w-[300px] bg-white shadow-md flex flex-col justify-start items-center rounded-xl p-5 xxs:hidden md:block'
+          ? 'h-[95vh] w-[100px] bg-white shadow-md flex flex-col justify-start items-center rounded-xl text-black p-1 xxs:hidden md:block'
+          : 'h-[95vh] w-[300px] bg-white shadow-md flex flex-col justify-start items-center rounded-xl text-black p-5 xxs:hidden md:block'
       }
     >
       <div className="w-full">
