@@ -25,7 +25,7 @@ func setupRoutes() {
 	mux.HandleFunc("/uploadImages", uploadImages.UploadImages)
 	mux.HandleFunc("/blogs", uploadImages.GetAllBlogs)
 	mux.HandleFunc("/deleteBlog", uploadImages.DeleteBlog)
-	mux.HandleFunc("/", HelloHandler)
+	mux.HandleFunc("/getBlogItem/", uploadImages.GetOneItem)
 	ServeStaticFiles(mux)
 
 	log.Fatal(http.ListenAndServe(":8080", mux))
