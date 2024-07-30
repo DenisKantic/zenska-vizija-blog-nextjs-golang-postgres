@@ -1,8 +1,9 @@
 'use client'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useTransition } from 'react'
 import Image from 'next/image'
 import axios from 'axios'
 import { useRouter } from 'next/navigation'
+import LoadingSpinner from '@/app/spinner/LoadingSpinner'
 
 interface Blog {
   id: number
@@ -15,8 +16,8 @@ interface Blog {
 
 const BlogList: React.FC = () => {
   const [blogs, setBlogs] = useState<Blog[]>([])
-  const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState<boolean>(true) // loading state
   const router = useRouter()
 
   console.log('BLOGS', blogs)
@@ -41,11 +42,12 @@ const BlogList: React.FC = () => {
       })
 
       setBlogs(processedBlogs)
+      setIsLoading(false)
       console.log(response.data)
     } catch (error) {
-      setError('Failed to fetch blogs')
+      if (axios.isAxiosError(error)) setError('Greška u učitavanju sa servera.')
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
@@ -53,8 +55,8 @@ const BlogList: React.FC = () => {
     fetchBlogs()
   }, []) // Empty dependency array means this effect runs once on mount
 
-  if (loading) return <p>Loading...</p>
-  if (error) return <p>{error}</p>
+  if (isLoading) return <LoadingSpinner />
+  if (error) return <p className="text-2xl text-red-600 font-bold">{error}</p>
 
   function formatDate(dateString: string): string {
     const date = new Date(dateString)
@@ -83,11 +85,18 @@ const BlogList: React.FC = () => {
   }
 
   return (
-    <>
+    <div
+      className={
+        isLoading
+          ? 'hidden'
+          : 'w-full  grid gap-10 xxs:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+      }
+    >
+      {isLoading && <LoadingSpinner />}
       {blogs.map((blog) => (
         <div
           key={blog.id}
-          className="relative group overflow-hidden text-black bg-gray-300  h-full rounded-xl"
+          className="relative group overflow-hidden text-black bg-gray-300 h-[42svh] rounded-xl"
         >
           <Image
             src={`http://localhost:8080/${blog.image_paths[0]}`}
@@ -103,16 +112,11 @@ const BlogList: React.FC = () => {
               )
             }}
           />
-          <div className="p-2">
+          <div className="p-4 h-full">
             <p className="text-2xl font-bold text-black">
               {blog.title.substring(0, 20) + '...'}
             </p>
-            <p
-              className="text-lg"
-              dangerouslySetInnerHTML={{
-                __html: blog.description.substring(0, 20) + '...',
-              }}
-            ></p>
+
             <div>
               {/* {blog.image_paths.map((path, index) => {
               // Log the image path to verify
@@ -154,7 +158,7 @@ const BlogList: React.FC = () => {
           </div>
         </div>
       ))}
-    </>
+    </div>
   )
 }
 

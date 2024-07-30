@@ -156,7 +156,7 @@ func GetAllBlogs(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	rows, err := db.Query("SELECT id, title, description, image_paths, created_at, updated_at FROM blogs")
+	rows, err := db.Query("SELECT id, title, description, image_paths, created_at, updated_at FROM blogs ORDER BY created_at DESC")
 	if err != nil {
 		http.Error(w, "Error querying database"+err.Error(), http.StatusInternalServerError)
 		return
