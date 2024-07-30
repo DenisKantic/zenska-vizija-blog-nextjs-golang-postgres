@@ -11,13 +11,7 @@ const FetchData = () => {
     >
       <h1 className="text-4xl pb-10 text-black">Moje objave</h1>
 
-      <div
-        className="w-full min-h-[100svh] grid gap-10
-      xxs:grid-cols-1 
-      md:grid-cols-2
-      lg:grid-cols-3
-      xl:grid-cols-4"
-      >
+      <div className="w-full min-h-[50svh] overflow-hidden">
         <UserDataFetcher />
       </div>
     </div>
