@@ -239,15 +239,48 @@ func DeleteBlog(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	rows, err := db.Query("DELETE FROM blogs WHERE id = $1", id)
+	// Fetch file paths from the database
+	var filePathsStr string
+	err = db.QueryRow("SELECT image_paths FROM blogs WHERE id = $1", id).Scan(&filePathsStr)
 	if err != nil {
-		http.Error(w, "Error querying database"+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Error fetching file paths from database", http.StatusInternalServerError)
 		return
 	}
-	defer rows.Close()
+
+	// Delete the blog post from the database
+	_, err = db.Exec("DELETE FROM blogs WHERE id = $1", id)
+	if err != nil {
+		http.Error(w, "Error deleting blog from database", http.StatusInternalServerError)
+		return
+	}
+
+	// Convert file paths from string format to slice
+	filePathsStr = strings.Trim(filePathsStr, "{}")
+	filePathsList := strings.Split(filePathsStr, ",")
+
+	// Delete each file from the file server
+	for _, path := range filePathsList {
+		// Ensure paths do not include the 'uploads/' directory again
+		// Check if path starts with 'uploads/' and remove it
+		if strings.HasPrefix(path, "uploads/") {
+			path = strings.TrimPrefix(path, "uploads/")
+		}
+
+		fullPath := filepath.Join("uploads", path)
+		fmt.Println("Attempting to delete:", fullPath)
+
+		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+			fmt.Println("File does not exist:", fullPath)
+			continue
+		}
+		err := os.Remove(fullPath)
+		if err != nil {
+			http.Error(w, "Error deleting file from server: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
 
 	w.WriteHeader(http.StatusOK)
-
 }
 
 func GetOneItem(w http.ResponseWriter, r *http.Request) {

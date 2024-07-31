@@ -65,7 +65,7 @@ export default async function BlogItem({ params: { slug } }: Props) {
         height={50}
         width={50}
         className="w-full h-[50svh] object-contain"
-        src={`http://localhost:8080/${images[1]}`}
+        src={`http://localhost:8080/${images[0]}`}
       />
     </div>
   )
