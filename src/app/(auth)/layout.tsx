@@ -1,11 +1,16 @@
-import { FC, ReactNode } from "react";
+import { FC, ReactNode } from 'react'
+import { AuthProvider } from '../AuthContext'
 
 interface AuthLayoutProps {
-  children: ReactNode;
+  children: ReactNode
 }
 
 const AuthLayout: FC<AuthLayoutProps> = ({ children }) => {
-  return <div>{children}</div>;
-};
+  return (
+    <div>
+      <AuthProvider>{children}</AuthProvider>
+    </div>
+  )
+}
 
-export default AuthLayout;
+export default AuthLayout

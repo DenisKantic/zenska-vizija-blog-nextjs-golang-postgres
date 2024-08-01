@@ -1,6 +1,7 @@
 import Navbar from './navigation/Navbar'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
+import { AuthProvider } from '../AuthContext'
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -8,7 +9,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <div className="p-5 flex-none">
         <Navbar />
       </div>
-      <div className="flex p-5 w-full overflow-hidden">{children}</div>
+      <div className="flex p-5 w-full overflow-hidden">
+        <AuthProvider>{children}</AuthProvider>
+      </div>
       <ToastContainer
         position="top-right"
         autoClose={5000}
