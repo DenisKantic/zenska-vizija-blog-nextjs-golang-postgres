@@ -8,8 +8,8 @@ import { FaFileAlt } from 'react-icons/fa'
 import { IoIosCloseCircleOutline } from 'react-icons/io'
 import { CiLogout } from 'react-icons/ci'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/app/AuthContext'
 import { FaHome } from 'react-icons/fa'
+import { useAuth } from '@/app/AuthContext'
 
 const Navbar = () => {
   const { logout } = useAuth()

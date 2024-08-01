@@ -1,6 +1,7 @@
 package main
 
 import (
+	"backend/auth"
 	"backend/uploadImages"
 	"fmt"
 	"log"
@@ -26,6 +27,9 @@ func setupRoutes() {
 	mux.HandleFunc("/blogs", uploadImages.GetAllBlogs)
 	mux.HandleFunc("/deleteBlog", uploadImages.DeleteBlog)
 	mux.HandleFunc("/getBlogItem/", uploadImages.GetOneItem)
+	mux.HandleFunc("/register", auth.Register)
+	mux.HandleFunc("/login", auth.Login)
+	mux.HandleFunc("/logout", auth.Logout)
 	ServeStaticFiles(mux)
 
 	log.Fatal(http.ListenAndServe(":8080", mux))
