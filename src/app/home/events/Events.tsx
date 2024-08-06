@@ -1,55 +1,33 @@
-"use client";
-import { useState, useEffect } from "react";
-import Image from "next/image";
+'use client'
+import { useState, useEffect } from 'react'
+import Image from 'next/image'
 // firebase
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/app/FirebaseConfig";
+import { collection, getDocs } from 'firebase/firestore'
 // components
-import EventCard from "./EventCard";
+import EventCard from './EventCard'
 
 const Events = () => {
-  const [startIndex, setStartIndex] = useState(0);
-  const [events, setEvents] = useState([]);
-
-  // get events from firestore
-  const getEvents = () => {
-    const eventsCollectionRef = collection(db, "event");
-
-    getDocs(eventsCollectionRef)
-      .then((response) => {
-        const eventData: any = response.docs.map((doc) => ({
-          data: doc.data(),
-          id: doc.id,
-        }));
-        setEvents(eventData);
-      })
-      .catch((error) => {
-        console.log(error.message);
-      });
-  };
+  const [startIndex, setStartIndex] = useState(0)
+  const [events, setEvents] = useState([])
 
   useEffect(() => {
-    getEvents();
-  }, []);
-
-  useEffect(() => {
-    console.log("svi dogadjaji: ", events);
-  }, [events]);
+    console.log('svi dogadjaji: ', events)
+  }, [events])
 
   {
     /*pagination logic*/
   }
   const handleNextBlogs = () => {
-    setStartIndex((prevIndex) => prevIndex + 4);
-  };
+    setStartIndex((prevIndex) => prevIndex + 4)
+  }
 
   const handlePrevBlogs = () => {
-    setStartIndex((prevIndex) => Math.max(prevIndex - 4, 0));
-  };
+    setStartIndex((prevIndex) => Math.max(prevIndex - 4, 0))
+  }
 
-  const currentEvents = events.slice(startIndex, startIndex + 4);
-  const currentPage = Math.floor(startIndex / 4) + 1;
-  const totalPages = Math.ceil(events.length / 4);
+  const currentEvents = events.slice(startIndex, startIndex + 4)
+  const currentPage = Math.floor(startIndex / 4) + 1
+  const totalPages = Math.ceil(events.length / 4)
 
   return (
     <>
@@ -133,7 +111,7 @@ const Events = () => {
         </span>
       </div>
     </>
-  );
-};
+  )
+}
 
-export default Events;
+export default Events

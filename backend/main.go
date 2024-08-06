@@ -14,7 +14,7 @@ func HelloHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ServeStaticFiles(mux *http.ServeMux) {
-	staticDir := "uploads/"
+	staticDir := "uploads"
 	fmt.Printf("Serving static files from %s\n", staticDir)
 	mux.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir(staticDir))))
 }

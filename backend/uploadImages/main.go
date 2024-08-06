@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -76,8 +77,8 @@ func UploadImages(w http.ResponseWriter, r *http.Request) {
 	files := r.MultipartForm.File["images"]
 	title := r.FormValue("title")
 	description := r.FormValue("description")
-	var slug = title
-	slug = strings.ToLower(title)
+
+	var slug = strings.ToLower(title)
 	slug = strings.ReplaceAll(title, " ", "-")
 	re := regexp.MustCompile(`[^a-z0-9-]`)
 	slug = re.ReplaceAllString(slug, "")
@@ -165,6 +166,26 @@ func GetAllBlogs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	pageStr := r.URL.Query().Get("page")
+	pageSizeStr := r.URL.Query().Get("pageSize")
+
+	page := 1
+	pageSize := 16
+
+	if pageStr != "" {
+		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
+			page = p
+		}
+	}
+
+	if pageSizeStr != "" {
+		if s, err := strconv.Atoi(pageSizeStr); err == nil && s > 0 {
+			pageSize = s
+		}
+	}
+
+	offset := (page - 1) * pageSize
+
 	db, err := dbConn()
 	if err != nil {
 		http.Error(w, "Error connecting to database", http.StatusInternalServerError)
@@ -172,11 +193,25 @@ func GetAllBlogs(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	rows, err := db.Query("SELECT id, title, description, image_paths, created_at, updated_at, slug FROM blogs ORDER BY created_at DESC")
+	// Query to get the total number of blogs
+	var totalCount int
+	countQuery := "SELECT COUNT(*) FROM blogs"
+	err = db.QueryRow(countQuery).Scan(&totalCount)
+	if err != nil {
+		http.Error(w, "Error querying database for count", http.StatusInternalServerError)
+		return
+	}
+
+	// Calculate total pages
+	totalPages := (totalCount + pageSize - 1) / pageSize
+
+	query := "SELECT id, title, description, image_paths, created_at, updated_at, slug FROM blogs ORDER BY created_at DESC LIMIT $1 OFFSET $2"
+	rows, err := db.Query(query, pageSize, offset)
 	if err != nil {
 		http.Error(w, "Error querying database"+err.Error(), http.StatusInternalServerError)
 		return
 	}
+	fmt.Println("getting from database")
 	defer rows.Close()
 
 	var blogs []map[string]interface{}
@@ -211,9 +246,15 @@ func GetAllBlogs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	response := map[string]interface{}{
+		"blogs":       blogs,
+		"totalPages":  totalPages,
+		"currentPage": page,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(blogs)
+	json.NewEncoder(w).Encode(response)
 }
 
 func DeleteBlog(w http.ResponseWriter, r *http.Request) {
