@@ -2,7 +2,8 @@ package main
 
 import (
 	"backend/auth"
-	"backend/uploadImages"
+	"backend/createBlogPost"
+	"backend/createEventPost"
 	"fmt"
 	"log"
 	"net/http"
@@ -23,11 +24,17 @@ func setupRoutes() {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/uploadImages", uploadImages.UploadImages)
-	mux.HandleFunc("/blogs", uploadImages.GetAllBlogs)
-	mux.HandleFunc("/deleteBlog", uploadImages.DeleteBlog)
-	mux.HandleFunc("/getBlogItem/", uploadImages.GetOneItem)
-	mux.HandleFunc("/register", auth.Register)
+	// API routes for BlogPost
+	mux.HandleFunc("/createBlog", createBlogPost.UploadBlogPost)
+	mux.HandleFunc("/blogs", createBlogPost.GetAllBlogs)
+	mux.HandleFunc("/deleteBlog", createBlogPost.DeleteBlog)
+	mux.HandleFunc("/getBlogItem/", createBlogPost.GetOneItem)
+	///////////////////////////////////////////////////////////
+
+	// API routes for EventPost
+	mux.HandleFunc("/createEvent", createEventPost.UploadEventPost)
+
+	// mux.HandleFunc("/register", auth.Register)
 	mux.HandleFunc("/login", auth.Login)
 	mux.HandleFunc("/logout", auth.Logout)
 	ServeStaticFiles(mux)

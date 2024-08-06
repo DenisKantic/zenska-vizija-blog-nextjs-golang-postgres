@@ -9,7 +9,9 @@ const FetchData = () => {
       className="w-full h-full overflow-y-scroll
                     xxs:p-0 md:p-10"
     >
-      <h1 className="text-4xl pb-10 text-black">Moje objave</h1>
+      <h1 className="text-4xl pb-10 text-black focus:outline-none">
+        Moje objave
+      </h1>
 
       <div className="w-full min-h-[100svh] overflow-hidden">
         <UserDataFetcher />

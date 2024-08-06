@@ -1,4 +1,4 @@
-package uploadImages
+package createBlogPost
 
 import (
 	"database/sql"
@@ -59,7 +59,7 @@ func dbConn() (*sql.DB, error) {
 	return db, nil
 }
 
-func UploadImages(w http.ResponseWriter, r *http.Request) {
+func UploadBlogPost(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
 	w.Header().Set("Access-Control-Allow-Methods", "POST")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
@@ -77,6 +77,21 @@ func UploadImages(w http.ResponseWriter, r *http.Request) {
 	files := r.MultipartForm.File["images"]
 	title := r.FormValue("title")
 	description := r.FormValue("description")
+
+	if title == "" {
+		http.Error(w, "Title is required", http.StatusBadRequest)
+		return
+	}
+
+	if description == "" {
+		http.Error(w, "Description is required", http.StatusBadRequest)
+		return
+	}
+
+	if len(files) == 0 {
+		http.Error(w, "No images uploaded", http.StatusBadRequest)
+		return
+	}
 
 	var slug = strings.ToLower(title)
 	slug = strings.ReplaceAll(title, " ", "-")

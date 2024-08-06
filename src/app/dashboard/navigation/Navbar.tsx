@@ -79,7 +79,15 @@ const Navbar = () => {
             className="flex flex-row items-center justify-start pt-7 text-xl cursor-pointer hover:text-red-400"
           >
             <IoCreate />
-            <p className={nav ? 'hidden' : 'pl-10'}>Kreiraj objavu</p>
+            <p className={nav ? 'hidden' : 'pl-10'}>Kreiraj blog</p>
+          </Link>
+
+          <Link
+            href="/dashboard/createEventPost"
+            className="flex flex-row items-center justify-start pt-7 text-xl cursor-pointer hover:text-red-400"
+          >
+            <IoCreate />
+            <p className={nav ? 'hidden' : 'pl-10'}>Kreiraj događaj</p>
           </Link>
 
           <Link
