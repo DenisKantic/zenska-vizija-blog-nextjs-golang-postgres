@@ -2,12 +2,16 @@
 
 export async function SaveBlogToDB(formData: FormData, description: string) {
   const images = formData.getAll('images')
-  const title = formData.get('title')?.toString() || ''
+  const title = formData.get('title')?.toString() || ' '
 
   const formDataToSend = new FormData()
 
-  formDataToSend.append('title', title)
-  formDataToSend.append('description', description)
+  if (title?.length == 0 && description.length == 0) {
+    throw Error('Error')
+  } else {
+    formDataToSend.append('title', title)
+    formDataToSend.append('description', description)
+  }
 
   if (images.length === 0) {
     return {

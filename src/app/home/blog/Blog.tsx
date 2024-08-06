@@ -1,53 +1,30 @@
-"use client";
-import { useState, useEffect } from "react";
-import Image from "next/image";
+'use client'
+import { useState, useEffect } from 'react'
+import Image from 'next/image'
 // firebase
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/app/FirebaseConfig";
 // components
-import BlogCard from "./BlogCard";
+import BlogCard from './BlogCard'
 
 const Blog = () => {
-  const [startIndex, setStartIndex] = useState(0);
-  const [blogs, setBlogs] = useState([]);
- 
-  // get blogs from firestore
-  const getBlogs = () => {
-    const blogsCollectionRef = collection(db, "blog");
-
-    getDocs(blogsCollectionRef)
-      .then((response) => {
-        const blogData: any = response.docs.map((doc) => ({
-          data: doc.data(),
-          id: doc.id,
-        }));
-        setBlogs(blogData);
-      })
-      .catch((error) => {
-        console.log(error.message);
-      });
-  };
+  const [startIndex, setStartIndex] = useState(0)
+  const [blogs, setBlogs] = useState([])
 
   useEffect(() => {
-    getBlogs();
-  }, []);
-
-  useEffect(() => {
-    console.log("svi blogovi: ", blogs);
-  }, [blogs]);
+    console.log('svi blogovi: ', blogs)
+  }, [blogs])
 
   // pagination logic
   const handleNextBlogs = () => {
-    setStartIndex((prevIndex) => prevIndex + 4);
-  };
+    setStartIndex((prevIndex) => prevIndex + 4)
+  }
 
   const handlePrevBlogs = () => {
-    setStartIndex((prevIndex) => Math.max(prevIndex - 4, 0));
-  };
+    setStartIndex((prevIndex) => Math.max(prevIndex - 4, 0))
+  }
 
-  const currentBlogs = blogs.slice(startIndex, startIndex + 4);
-  const currentPage = Math.floor(startIndex / 4) + 1;
-  const totalPages = Math.ceil(blogs.length / 4);
+  const currentBlogs = blogs.slice(startIndex, startIndex + 4)
+  const currentPage = Math.floor(startIndex / 4) + 1
+  const totalPages = Math.ceil(blogs.length / 4)
 
   return (
     <div id="blog" className="py-8">
@@ -102,7 +79,7 @@ const Blog = () => {
         </span>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Blog;
+export default Blog

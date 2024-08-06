@@ -176,7 +176,10 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		Name:     "token",
 		Value:    token,
 		HttpOnly: true,
+		Secure:   true, // true if using https
 		Path:     "/",
+		SameSite: http.SameSiteStrictMode,
+		Expires:  time.Now().Add(24 * time.Hour),
 	})
 
 	fmt.Print("User is logged in")
