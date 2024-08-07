@@ -1,4 +1,4 @@
-package uploadImages
+package createEventPost
 
 import (
 	"database/sql"
@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/joho/godotenv"
-	_ "github.com/lib/pq"
 	"io"
 	"log"
 	"net/http"
@@ -23,12 +22,15 @@ var (
 	DB_NAME     string
 	DB_HOST     string
 	DB_PORT     string
+	JWT_SECRET  string
 )
 
-type Blog struct {
+type Event struct {
 	ID          int    `json:"id"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
+	Location    string `json:"location"`
+	Time        string `json:"time"`
 	ImagePaths  string `json:"image_paths"`
 	CreatedAt   string `json:"created_at"`
 	UpdatedAt   string `json:"updated_at"`
@@ -59,7 +61,7 @@ func dbConn() (*sql.DB, error) {
 	return db, nil
 }
 
-func UploadImages(w http.ResponseWriter, r *http.Request) {
+func UploadEventPost(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
 	w.Header().Set("Access-Control-Allow-Methods", "POST")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
@@ -68,15 +70,42 @@ func UploadImages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := r.ParseMultipartForm(100 << 20) // 100 MB max
+	err := r.ParseMultipartForm(250 << 20) // 100 MB max
 	if err != nil {
 		http.Error(w, "Error processing form", http.StatusInternalServerError)
 		return
 	}
 
 	files := r.MultipartForm.File["images"]
-	title := r.FormValue("title")
+	title := r.FormValue("eventTitle")
+	location := r.FormValue("location")
+	time := r.FormValue("time")
 	description := r.FormValue("description")
+
+	if title == "" {
+		http.Error(w, "Title is required", http.StatusBadRequest)
+		return
+	}
+
+	if description == "" {
+		http.Error(w, "Description is required", http.StatusBadRequest)
+		return
+	}
+
+	if location == "" {
+		http.Error(w, "Location is required", http.StatusBadRequest)
+		return
+	}
+
+	if time == "" {
+		http.Error(w, "Time is required", http.StatusBadRequest)
+		return
+	}
+
+	if len(files) == 0 {
+		http.Error(w, "No images uploaded", http.StatusBadRequest)
+		return
+	}
 
 	var slug = strings.ToLower(title)
 	slug = strings.ReplaceAll(title, " ", "-")
@@ -101,7 +130,7 @@ func UploadImages(w http.ResponseWriter, r *http.Request) {
 		defer src.Close()
 
 		// create a new file in the server
-		dstPath := filepath.Join("uploads", file.Filename) // FILE NAME FOLDER
+		dstPath := filepath.Join("events", file.Filename) // FILE NAME FOLDER
 		dst, err := os.Create(dstPath)
 		if err != nil {
 			http.Error(w, "Error creating a new file in the server", http.StatusInternalServerError)
@@ -123,7 +152,7 @@ func UploadImages(w http.ResponseWriter, r *http.Request) {
 	}
 	// insert the file paths into the database
 	filePathsStr := "{" + strings.Join(filePaths, ",") + "}"
-	err = saveFilePathToDB(filePathsStr, title, description, slug)
+	err = saveFilePathToDB(filePathsStr, title, location, time, description, slug)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -141,14 +170,14 @@ func UploadImages(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func saveFilePathToDB(filePaths string, title string, description string, slug string) error {
+func saveFilePathToDB(filePaths string, title string, location string, time string, description string, slug string) error {
 	db, err := dbConn()
 	if err != nil {
 		return fmt.Errorf("error connecting to database: %v", err)
 	}
 	defer db.Close()
 
-	_, err = db.Exec("INSERT INTO blogs (image_paths, title, description, slug) VALUES ($1,$2,$3, $4)", filePaths, title, description, slug)
+	_, err = db.Exec("INSERT INTO events (image_paths, title, location, time, description, slug) VALUES ($1,$2,$3, $4, $5, $6)", filePaths, title, location, time, description, slug)
 	if err != nil {
 		return fmt.Errorf("error saving file to database: %v", err)
 	}
@@ -156,8 +185,8 @@ func saveFilePathToDB(filePaths string, title string, description string, slug s
 	return nil
 }
 
-// GetAllBlogs handles the GET request to retrieve all blog entries
-func GetAllBlogs(w http.ResponseWriter, r *http.Request) {
+// GetAllEvents handles the GET request to retrieve all event entries
+func GetAllEvents(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
 	w.Header().Set("Access-Control-Allow-Methods", "GET")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
@@ -195,7 +224,7 @@ func GetAllBlogs(w http.ResponseWriter, r *http.Request) {
 
 	// Query to get the total number of blogs
 	var totalCount int
-	countQuery := "SELECT COUNT(*) FROM blogs"
+	countQuery := "SELECT COUNT(*) FROM events"
 	err = db.QueryRow(countQuery).Scan(&totalCount)
 	if err != nil {
 		http.Error(w, "Error querying database for count", http.StatusInternalServerError)
@@ -205,7 +234,7 @@ func GetAllBlogs(w http.ResponseWriter, r *http.Request) {
 	// Calculate total pages
 	totalPages := (totalCount + pageSize - 1) / pageSize
 
-	query := "SELECT id, title, description, image_paths, created_at, updated_at, slug FROM blogs ORDER BY created_at DESC LIMIT $1 OFFSET $2"
+	query := "SELECT id, title, description, time, location, image_paths, created_at, updated_at, slug FROM events ORDER BY created_at DESC LIMIT $1 OFFSET $2"
 	rows, err := db.Query(query, pageSize, offset)
 	if err != nil {
 		http.Error(w, "Error querying database"+err.Error(), http.StatusInternalServerError)
@@ -214,31 +243,33 @@ func GetAllBlogs(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("getting from database")
 	defer rows.Close()
 
-	var blogs []map[string]interface{}
+	var events []map[string]interface{}
 
 	for rows.Next() {
 		var id int
-		var title, description, imagePaths string
+		var title, description, imagePaths, time, location string
 		var dateCreated, updatedAt string
 		var slug string
 
-		err := rows.Scan(&id, &title, &description, &imagePaths, &dateCreated, &updatedAt, &slug)
+		err := rows.Scan(&id, &title, &description, &time, &location, &imagePaths, &dateCreated, &updatedAt, &slug)
 		if err != nil {
 			http.Error(w, "Error scanning row", http.StatusInternalServerError)
 			return
 		}
 
-		blog := map[string]interface{}{
+		event := map[string]interface{}{
 			"id":           id,
 			"title":        title,
 			"description":  description,
 			"image_paths":  imagePaths,
 			"date_created": dateCreated,
+			"time":         time,
+			"location":     location,
 			"updated_at":   updatedAt,
 			"slug":         slug,
 		}
 
-		blogs = append(blogs, blog)
+		events = append(events, event)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -247,7 +278,7 @@ func GetAllBlogs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := map[string]interface{}{
-		"blogs":       blogs,
+		"events":      events,
 		"totalPages":  totalPages,
 		"currentPage": page,
 	}
@@ -257,7 +288,7 @@ func GetAllBlogs(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func DeleteBlog(w http.ResponseWriter, r *http.Request) {
+func DeleteEvent(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
 	w.Header().Set("Access-Control-Allow-Methods", "DELETE")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
@@ -282,14 +313,14 @@ func DeleteBlog(w http.ResponseWriter, r *http.Request) {
 
 	// Fetch file paths from the database
 	var filePathsStr string
-	err = db.QueryRow("SELECT image_paths FROM blogs WHERE id = $1", id).Scan(&filePathsStr)
+	err = db.QueryRow("SELECT image_paths FROM events WHERE id = $1", id).Scan(&filePathsStr)
 	if err != nil {
 		http.Error(w, "Error fetching file paths from database", http.StatusInternalServerError)
 		return
 	}
 
 	// Delete the blog post from the database
-	_, err = db.Exec("DELETE FROM blogs WHERE id = $1", id)
+	_, err = db.Exec("DELETE FROM events WHERE id = $1", id)
 	if err != nil {
 		http.Error(w, "Error deleting blog from database", http.StatusInternalServerError)
 		return
@@ -303,11 +334,11 @@ func DeleteBlog(w http.ResponseWriter, r *http.Request) {
 	for _, path := range filePathsList {
 		// Ensure paths do not include the 'uploads/' directory again
 		// Check if path starts with 'uploads/' and remove it
-		if strings.HasPrefix(path, "uploads/") {
-			path = strings.TrimPrefix(path, "uploads/")
+		if strings.HasPrefix(path, "events/") {
+			path = strings.TrimPrefix(path, "events/")
 		}
 
-		fullPath := filepath.Join("uploads", path)
+		fullPath := filepath.Join("events", path)
 		fmt.Println("Attempting to delete:", fullPath)
 
 		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
@@ -326,15 +357,16 @@ func DeleteBlog(w http.ResponseWriter, r *http.Request) {
 
 func GetOneItem(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-	w.Header().Set("Access-Control-Allow-Methods", "GET")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
 	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
 		return
 	}
 
 	slug := r.URL.Query().Get("slug")
-	var blog Blog
+	var event Event
 
 	if slug == "" {
 		http.Error(w, "Missing slug", http.StatusBadRequest)
@@ -349,8 +381,8 @@ func GetOneItem(w http.ResponseWriter, r *http.Request) {
 
 	defer db.Close()
 
-	err = db.QueryRow("SELECT id, title, description, image_paths, created_at, updated_at FROM blogs WHERE slug = $1", slug).
-		Scan(&blog.ID, &blog.Title, &blog.Description, &blog.ImagePaths, &blog.CreatedAt, &blog.UpdatedAt)
+	err = db.QueryRow("SELECT id, title, description, time, location, image_paths, created_at, updated_at FROM events WHERE slug = $1", slug).
+		Scan(&event.ID, &event.Time, &event.Location, &event.Title, &event.Description, &event.ImagePaths, &event.CreatedAt, &event.UpdatedAt)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -364,7 +396,7 @@ func GetOneItem(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if err := json.NewEncoder(w).Encode(blog); err != nil {
+	if err := json.NewEncoder(w).Encode(event); err != nil {
 		http.Error(w, "Failed to encode item", http.StatusInternalServerError)
 	}
 

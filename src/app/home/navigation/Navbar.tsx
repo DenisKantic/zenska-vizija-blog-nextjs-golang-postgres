@@ -36,19 +36,20 @@ const Navbar = ({ showAside }: any) => {
           </div>
 
           <ul className="hidden md:flex mr-12 lg:gap-4 ">
-            <li
-              onClick={() => scrollTo('home')}
-              className="cursor-pointer hover:bg-crayola hover:text-white rounded-[16px] px-5 py-3"
+            <Link
+              href="/"
+              className="cursor-pointer hover:bg-crayola hover:text-white rounded-[16px] px-5 py-3 text-[16px]"
             >
-              <a className="text-[16px]">Početna</a>
-            </li>
+              Početna
+            </Link>
 
-            <li
+            <Link
               onClick={() => scrollTo('aboutUs')}
-              className="cursor-pointer hover:bg-crayola hover:text-white rounded-[16px] px-5 py-3"
+              href="/about_us"
+              className="cursor-pointer hover:bg-crayola hover:text-white rounded-[16px] px-5 py-3 text-[16px]"
             >
-              <a className="text-[16px]">O nama</a>
-            </li>
+              O nama
+            </Link>
 
             <li
               onClick={() => scrollTo('events')}
@@ -57,12 +58,12 @@ const Navbar = ({ showAside }: any) => {
               <a className="text-[16px]">Događaji</a>
             </li>
 
-            <li
-              onClick={() => scrollTo('blog')}
-              className="cursor-pointer hover:bg-crayola hover:text-white rounded-[16px] px-5 py-3"
+            <Link
+              href="/home/blog"
+              className="cursor-pointer text-[16px] hover:bg-crayola hover:text-white rounded-[16px] px-5 py-3"
             >
-              <a className="text-[16px]">Blog</a>
-            </li>
+              Blog
+            </Link>
 
             <li
               onClick={() => scrollTo('gallery')}

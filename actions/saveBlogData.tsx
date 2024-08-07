@@ -6,12 +6,8 @@ export async function SaveBlogToDB(formData: FormData, description: string) {
 
   const formDataToSend = new FormData()
 
-  if (title?.length == 0 && description.length == 0) {
-    throw Error('Error')
-  } else {
-    formDataToSend.append('title', title)
-    formDataToSend.append('description', description)
-  }
+  formDataToSend.append('title', title)
+  formDataToSend.append('description', description)
 
   if (images.length === 0) {
     return {
@@ -21,11 +17,17 @@ export async function SaveBlogToDB(formData: FormData, description: string) {
 
   // Append all images with the same key 'images'
   images.forEach((image) => {
-    formDataToSend.append('images', image)
+    if (images.length == 0) {
+      return {
+        success: false,
+      }
+    } else {
+      formDataToSend.append('images', image)
+    }
   })
 
   try {
-    const response = await fetch('http://localhost:8080/uploadImages', {
+    const response = await fetch('http://localhost:8080/createBlog', {
       method: 'POST',
       body: formDataToSend,
     })

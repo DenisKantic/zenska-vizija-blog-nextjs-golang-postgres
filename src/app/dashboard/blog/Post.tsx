@@ -75,7 +75,6 @@ const BlogList: React.FC = () => {
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
       setPage(newPage)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
     }
   }
 
@@ -102,14 +101,14 @@ const BlogList: React.FC = () => {
     try {
       await axios.delete(`http://localhost:8080/deleteBlog?id=${id}`)
       console.log(`Blog with ID ${id} deleted successfully.`)
-      fetchBlogs()
+      fetchBlogs(id)
     } catch (error) {
       console.log('error while deleting the blog', error)
     }
   }
 
   return (
-    <div className="relative w-full min-h-[100svh] ">
+    <div className="relative w-full min-h-[100svh] pb-20 focus:outline-none">
       <div
         className={
           isLoading
@@ -168,20 +167,20 @@ const BlogList: React.FC = () => {
           </div>
         ))}
       </div>
-      <div className="mt-10  w-full flex items-center justify-center">
+      <div className="absolute bottom-0 left-0 w-full flex items-center justify-center">
         <button
-          className="btn btn-secondary  disabled:text-black disabled:bg-pink-200 text-black text-lg"
+          className="btn btn-secondary  disabled:text-black disabled:bg-pink-200 text-black text-md"
           onClick={() => handlePageChange(page - 1)}
           disabled={page <= 1}
         >
           Prethodna
         </button>
-        <span className="text-black px-4">
+        <span className="text-black text-sm px-4">
           {' '}
           Stranica {page} od {totalPages}{' '}
         </span>
         <button
-          className="btn btn-primary text-black disabled:text-black disabled:bg-pink-200 text-lg"
+          className="btn btn-primary text-black disabled:text-black disabled:bg-pink-200 text-md"
           onClick={() => handlePageChange(page + 1)}
           disabled={page >= totalPages}
         >

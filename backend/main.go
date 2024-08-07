@@ -2,7 +2,8 @@ package main
 
 import (
 	"backend/auth"
-	"backend/uploadImages"
+	"backend/createBlogPost"
+	"backend/createEventPost"
 	"fmt"
 	"log"
 	"net/http"
@@ -14,20 +15,34 @@ func HelloHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ServeStaticFiles(mux *http.ServeMux) {
-	staticDir := "uploads"
-	fmt.Printf("Serving static files from %s\n", staticDir)
-	mux.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir(staticDir))))
+	staticDirUploads := "uploads"
+	staticDirEvents := "events"
+
+	fmt.Printf("Serving static files from %s\n", staticDirUploads)
+	fmt.Printf("Serving static files from %s\n", staticDirEvents)
+	mux.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir(staticDirUploads))))
+	mux.Handle("/events/", http.StripPrefix("/events/", http.FileServer(http.Dir(staticDirEvents))))
+
 }
 
 func setupRoutes() {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/uploadImages", uploadImages.UploadImages)
-	mux.HandleFunc("/blogs", uploadImages.GetAllBlogs)
-	mux.HandleFunc("/deleteBlog", uploadImages.DeleteBlog)
-	mux.HandleFunc("/getBlogItem/", uploadImages.GetOneItem)
-	mux.HandleFunc("/register", auth.Register)
+	// API routes for BlogPost
+	mux.HandleFunc("/createBlog", createBlogPost.UploadBlogPost)
+	mux.HandleFunc("/blogs", createBlogPost.GetAllBlogs)
+	mux.HandleFunc("/deleteBlog", createBlogPost.DeleteBlog)
+	mux.HandleFunc("/getBlogItem/", createBlogPost.GetOneItem)
+	///////////////////////////////////////////////////////////
+
+	// API routes for EventPost
+	mux.HandleFunc("/createEvent", createEventPost.UploadEventPost)
+	mux.HandleFunc("/events", createEventPost.GetAllEvents)
+	mux.HandleFunc("/deleteEvent", createEventPost.DeleteEvent)
+	mux.HandleFunc("/getEventItem/", createEventPost.GetOneItem)
+
+	// mux.HandleFunc("/register", auth.Register)
 	mux.HandleFunc("/login", auth.Login)
 	mux.HandleFunc("/logout", auth.Logout)
 	ServeStaticFiles(mux)
