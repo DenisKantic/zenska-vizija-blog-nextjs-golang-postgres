@@ -15,9 +15,14 @@ func HelloHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ServeStaticFiles(mux *http.ServeMux) {
-	staticDir := "uploads"
-	fmt.Printf("Serving static files from %s\n", staticDir)
-	mux.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir(staticDir))))
+	staticDirUploads := "uploads"
+	staticDirEvents := "events"
+
+	fmt.Printf("Serving static files from %s\n", staticDirUploads)
+	fmt.Printf("Serving static files from %s\n", staticDirEvents)
+	mux.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir(staticDirUploads))))
+	mux.Handle("/events/", http.StripPrefix("/events/", http.FileServer(http.Dir(staticDirEvents))))
+
 }
 
 func setupRoutes() {
@@ -33,6 +38,9 @@ func setupRoutes() {
 
 	// API routes for EventPost
 	mux.HandleFunc("/createEvent", createEventPost.UploadEventPost)
+	mux.HandleFunc("/events", createEventPost.GetAllEvents)
+	mux.HandleFunc("/deleteEvent", createEventPost.DeleteEvent)
+	mux.HandleFunc("/getEventItem/", createEventPost.GetOneItem)
 
 	// mux.HandleFunc("/register", auth.Register)
 	mux.HandleFunc("/login", auth.Login)
