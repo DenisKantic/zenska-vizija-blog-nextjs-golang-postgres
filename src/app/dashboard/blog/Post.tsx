@@ -15,7 +15,7 @@ interface Blog {
   slug: string
 }
 
-const PAGE_SIZE = 12
+const PAGE_SIZE = 16
 
 const BlogList: React.FC = () => {
   const [blogs, setBlogs] = useState<Blog[]>([])
@@ -153,9 +153,6 @@ const BlogList: React.FC = () => {
                 >
                   Pročitaj
                 </Link>
-                <span className="text-white text-2xl font-bold btn btn-info">
-                  Uredi
-                </span>
                 <button
                   onClick={() => deleteBlog(blog.id)}
                   className="text-white text-2xl font-bold btn btn-error"

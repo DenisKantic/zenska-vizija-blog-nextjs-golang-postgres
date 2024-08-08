@@ -5,54 +5,56 @@ import axios from 'axios'
 import LoadingSpinner from '@/app/spinner/LoadingSpinner'
 import Link from 'next/link'
 
-interface Blog {
+interface Event {
   id: number
   title: string
   description: string
   image_paths: string[] // Array of image paths
   date_created: string
+  location: string
+  time: string
   updated_at: string
   slug: string
 }
 
-const PAGE_SIZE = 16
+const PAGE_SIZE = 14
 
-const BlogList: React.FC = () => {
-  const [blogs, setBlogs] = useState<Blog[]>([])
+const EventList: React.FC = () => {
+  const [events, setEvents] = useState<Event[]>([])
   const [page, setPage] = useState<number>(1)
   const [totalPages, setTotalPages] = useState<number>(1)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(true) // loading state
-  const [cache, setCache] = useState<Record<number, Blog[]>>({}) // state for caching previous fetched pages
+  const [cache, setCache] = useState<Record<number, Event[]>>({}) // state for caching previous fetched pages
 
-  const fetchBlogs = async (page: number) => {
+  const fetchEvents = async (page: number) => {
     try {
       const response = await axios.get<{
-        blogs: Blog[]
+        events: Event[]
         totalPages: number
         currentPage: number
-      }>(`http://localhost:8080/blogs?page=${page}&pageSize=${PAGE_SIZE}`)
-      const processedBlogs = response.data.blogs.map((blog) => {
+      }>(`http://localhost:8080/events?page=${page}&pageSize=${PAGE_SIZE}`)
+      const processedEvents = response.data.events.map((event) => {
         const imagePaths =
-          typeof blog.image_paths === 'string'
-            ? (blog.image_paths
+          typeof event.image_paths === 'string'
+            ? (event.image_paths
                 .replace(/{|}/g, '') // Remove curly braces
                 .split(',') // Split by comma
                 .map((path: string) => path.trim()) as string[]) // Trim whitespace // Assert as string array
-            : blog.image_paths // If already an array, use it directly
+            : event.image_paths // If already an array, use it directly
         console.log('SLIKE', imagePaths)
         return {
-          ...blog,
+          ...event,
           image_paths: imagePaths,
         }
       })
 
       setCache((prevCache) => ({
         ...prevCache,
-        [page]: processedBlogs,
+        [page]: processedEvents,
       }))
 
-      setBlogs(processedBlogs)
+      setEvents(processedEvents)
       setIsLoading(false)
       setTotalPages(response.data.totalPages)
     } catch (error) {
@@ -65,9 +67,9 @@ const BlogList: React.FC = () => {
   useEffect(() => {
     // fetch blogs for the current page if not in cache
     if (!cache[page]) {
-      fetchBlogs(page)
+      fetchEvents(page)
     } else {
-      setBlogs(cache[page])
+      setEvents(cache[page])
       setIsLoading(false)
     }
   }, [page, cache])
@@ -107,14 +109,14 @@ const BlogList: React.FC = () => {
         }
       >
         {isLoading && <LoadingSpinner />}
-        {blogs.map((blog) => (
+        {events.map((event) => (
           <div
-            key={blog.id}
+            key={event.id}
             className="relative group overflow-hidden text-black bg-gray-300 h-[40svh] rounded-xl"
           >
             <Image
-              src={`http://localhost:8080/${blog.image_paths[0]}`}
-              alt={`Blog Image ${blog.title}`}
+              src={`http://localhost:8080/${event.image_paths[0]}`}
+              alt={`Blog Image ${event.title}`}
               unoptimized
               className="w-full h-[30vh] object-cover bg-gray-400 rounded-t-xl"
               height={150} // Adjust as needed
@@ -128,18 +130,18 @@ const BlogList: React.FC = () => {
             />
             <div className="p-4 h-full overflow-hidden">
               <p className="text-2xl font-bold text-black">
-                {blog.title.substring(0, 12) + '...'}
+                {event.title.substring(0, 12) + '...'}
               </p>
 
               <p className="text-md">
-                Kreirano: {formatDate(blog.date_created)}
+                Kreirano: {formatDate(event.date_created)}
               </p>
             </div>
             <div className="absolute inset-0 bg-black bg-opacity-80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               <div className="flex gap-5 flex-col justify-start">
                 <Link
-                  href={`/home/blog/${blog.slug}`}
-                  className="text-black text-2xl font-bold btn bg-[#ff4bf0]  hover:text-gray-700 hover:bg-[#ffabf8]"
+                  href={`/dashboard/event/${event.slug}`}
+                  className="text-white text-2xl font-bold btn btn-success"
                 >
                   Pročitaj
                 </Link>
@@ -172,4 +174,4 @@ const BlogList: React.FC = () => {
   )
 }
 
-export default BlogList
+export default EventList

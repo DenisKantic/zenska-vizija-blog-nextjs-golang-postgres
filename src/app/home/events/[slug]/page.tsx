@@ -4,7 +4,6 @@ import axios from 'axios'
 import Image from 'next/image'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Pagination } from 'swiper/modules'
-import Navbar from '../../navigation/Navbar'
 
 // Import Swiper styles
 import 'swiper/css'
@@ -18,6 +17,8 @@ interface Blog {
   image_paths: string[] // Array of image paths
   date_created: string
   updated_at: string
+  time: string
+  location: string
   slug: string
 }
 
@@ -30,7 +31,7 @@ type Props = {
 const fetchBlogItem = async (slug: string): Promise<Blog | null> => {
   try {
     const response = await axios.get<Blog>(
-      `http://localhost:8080/getBlogItem/${slug}?slug=${slug}`
+      `http://localhost:8080/getEventItem/${slug}?slug=${slug}`
     )
     return response.data
   } catch (error) {
@@ -87,11 +88,8 @@ export default function BlogItem({ params: { slug } }: Props) {
     : processImagePaths(blog.image_paths)
 
   return (
-    <div className="w-full p-10 xxs:px-5 md:px-16 bg-white min-h-[100svh] overflow-y-scroll pb-20 focus:outline-none">
-      <Navbar />
-      <p className="mt-20 text-2xl text-black text-center font-bold">
-        {blog.title}
-      </p>
+    <div className="w-full min-h-[100svh] xxs:px-5 md:px-16 overflow-y-scroll pb-20 focus:outline-none">
+      <p className="text-2xl text-black font-bold">{blog.title}</p>
       <p
         className="py-5 text-justify mb-5 text-gray-800"
         dangerouslySetInnerHTML={{ __html: blog.description }}
@@ -126,7 +124,7 @@ export default function BlogItem({ params: { slug } }: Props) {
 
       {/* Fullscreen Overlay */}
       {fullscreen && (
-        <div className="fixed h-screen inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+        <div className="fixed h-screen inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 focus:outline-none">
           <Swiper
             initialSlide={currentSlide}
             modules={[Navigation, Pagination]}
@@ -135,11 +133,11 @@ export default function BlogItem({ params: { slug } }: Props) {
             navigation={{}} // Enable navigation
             slidesPerView={1}
             scrollbar={{ draggable: true }}
-            className="w-full h-[90svh]"
+            className="w-full h-[90svh] focus:outline-none"
           >
             {images.map((url, index) => (
               <SwiperSlide
-                className="w-full h-[90svh] flex items-center justify-center"
+                className="w-full h-[90svh] flex items-center justify-center focus:outline-none"
                 key={index}
               >
                 <Image
