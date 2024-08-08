@@ -4,7 +4,6 @@ import React, { useState } from 'react'
 import HeroSection from './hero-section/HeroSection'
 import AboutUs from './about-us/AboutUs'
 import Programs from './programs/Programs'
-import Events from './events/Events'
 import Gallery from './gallery/Gallery'
 import ImageSection from './image-section/ImageSection'
 import GreetingBlock from './greeting-block/GreetingBlock'
@@ -31,9 +30,6 @@ const LandingPage = () => {
         </section>
         <section id="programs">
           <Programs />
-        </section>
-        <section id="events">
-          <Events />
         </section>
         <section id="gallery">
           <Gallery />

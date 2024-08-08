@@ -51,12 +51,12 @@ const Navbar = ({ showAside }: any) => {
               O nama
             </Link>
 
-            <li
-              onClick={() => scrollTo('events')}
-              className="cursor-pointer hover:bg-crayola hover:text-white rounded-[16px] px-5 py-3"
+            <Link
+              href="/home/events"
+              className="cursor-pointer hover:bg-crayola hover:text-white rounded-[16px] px-5 py-3 text-[16px]"
             >
-              <a className="text-[16px]">Događaji</a>
-            </li>
+              Događaji
+            </Link>
 
             <Link
               href="/home/blog"
