@@ -35,12 +35,11 @@ const BlogList: React.FC = () => {
       const processedBlogs = response.data.blogs.map((blog) => {
         const imagePaths =
           typeof blog.image_paths === 'string'
-            ? (blog.image_paths
+            ? (blog.image_paths as string)
                 .replace(/{|}/g, '') // Remove curly braces
                 .split(',') // Split by comma
-                .map((path: string) => path.trim()) as string[]) // Trim whitespace // Assert as string array
+                .map((path: string) => path.trim()) // Trim whitespace // Assert as string array
             : blog.image_paths // If already an array, use it directly
-        console.log('SLIKE', imagePaths)
         return {
           ...blog,
           image_paths: imagePaths,
@@ -113,14 +112,14 @@ const BlogList: React.FC = () => {
         className={
           isLoading
             ? 'hidden'
-            : 'w-full grid gap-10 xxs:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+            : 'w-full grid gap-10 xxs:grid-cols-1 md:grid-cols-2 xl:grid-cols-4'
         }
       >
         {isLoading && <LoadingSpinner />}
         {blogs.map((blog) => (
           <div
             key={blog.id}
-            className="relative group overflow-hidden text-black bg-gray-300 h-[40svh] rounded-xl"
+            className="relative group overflow-hidden text-black bg-gray-300 min-h-[40svh] rounded-xl"
           >
             <Image
               src={`http://localhost:8080/${blog.image_paths[0]}`}
@@ -136,7 +135,7 @@ const BlogList: React.FC = () => {
                 )
               }}
             />
-            <div className="p-4 h-full overflow-hidden">
+            <div className="p-4 h-full">
               <p className="text-2xl font-bold text-black">
                 {blog.title.substring(0, 12) + '...'}
               </p>
@@ -144,18 +143,19 @@ const BlogList: React.FC = () => {
               <p className="text-md">
                 Kreirano: {formatDate(blog.date_created)}
               </p>
-            </div>
-            <div className="absolute inset-0 bg-black bg-opacity-80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <div className="flex gap-5 flex-col justify-start">
+              <div className="w-full flex flex-col gap-2 overflow-hidden">
                 <Link
                   href={`/dashboard/blog/${blog.slug}`}
-                  className="text-white text-2xl font-bold btn btn-success"
+                  className="text-white text-2xl w-full font-bold btn btn-info"
                 >
                   Pročitaj
                 </Link>
                 <button
-                  onClick={() => deleteBlog(blog.id)}
-                  className="text-white text-2xl font-bold btn btn-error"
+                  onClick={async () => {
+                    const response = await deleteBlog(blog.id)
+                    window.location.reload()
+                  }}
+                  className="text-white text-2xl w-full font-bold btn btn-error"
                 >
                   Obriši
                 </button>

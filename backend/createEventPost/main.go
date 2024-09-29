@@ -17,12 +17,7 @@ import (
 )
 
 var (
-	DB_USER     string
-	DB_PASSWORD string
-	DB_NAME     string
-	DB_HOST     string
-	DB_PORT     string
-	JWT_SECRET  string
+	DB_CONNECT string
 )
 
 type Event struct {
@@ -33,7 +28,6 @@ type Event struct {
 	Time        string `json:"time"`
 	ImagePaths  string `json:"image_paths"`
 	CreatedAt   string `json:"created_at"`
-	UpdatedAt   string `json:"updated_at"`
 }
 
 func init() {
@@ -42,19 +36,15 @@ func init() {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
 
-	DB_USER = os.Getenv("DB_USER")
-	DB_PASSWORD = os.Getenv("DB_PASSWORD")
-	DB_NAME = os.Getenv("DB_NAME")
-	DB_HOST = os.Getenv("DB_HOST")
-	DB_PORT = os.Getenv("DB_PORT")
+	DB_CONNECT = os.Getenv("DB_CONNECT")
+
 }
 
 func dbConn() (*sql.DB, error) {
-	psqlInfo := "host=%s port=%s user=%s password=%s dbname=%s sslmode=disable"
-	psqlInfo = fmt.Sprintf(psqlInfo, DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME)
-	fmt.Println("Connection string:", psqlInfo)
 
-	db, err := sql.Open("postgres", psqlInfo)
+	fmt.Println("Connection string:", DB_CONNECT)
+
+	db, err := sql.Open("postgres", DB_CONNECT)
 	if err != nil {
 		return nil, fmt.Errorf("error opening connection: %w", err)
 	}
@@ -107,64 +97,83 @@ func UploadEventPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var slug = strings.ToLower(title)
-	slug = strings.ReplaceAll(title, " ", "-")
+	// Generate slug from title
+	slug := strings.ToLower(strings.TrimSpace(title))
+	slug = strings.ReplaceAll(slug, " ", "-")
 	re := regexp.MustCompile(`[^a-z0-9-]`)
 	slug = re.ReplaceAllString(slug, "")
 
+	// Debugging: Print form data and file details
 	fmt.Println("Title:", title)
 	fmt.Println("Description:", description)
-
-	fmt.Println("Extracted files", files)
+	fmt.Println("Number of files:", len(files))
 
 	var filePaths []string
 
-	for _, file := range files {
-		// open the uploaded file
-		src, err := file.Open()
+	// Process each uploaded file
+	for _, fileHeader := range files {
+		// Step 1: Trim leading and trailing spaces from filename
+		filename := strings.TrimSpace(fileHeader.Filename)
+
+		// Step 2: Replace all spaces with dashes
+		filename = strings.ReplaceAll(filename, " ", "-")
+
+		// Step 3: Ensure valid filename characters (you can extend this if needed)
+		re := regexp.MustCompile(`[^a-zA-Z0-9._-]`)
+		filename = re.ReplaceAllString(filename, "")
+
+		// Open the uploaded file
+		src, err := fileHeader.Open()
 		if err != nil {
-			http.Error(w, "Error opening the file", http.StatusInternalServerError)
+			http.Error(w, "Error opening file", http.StatusInternalServerError)
+			fmt.Println("Error opening file:", err)
 			return
 		}
-
 		defer src.Close()
 
-		// create a new file in the server
-		dstPath := filepath.Join("events", file.Filename) // FILE NAME FOLDER
+		// Define the destination path for saving the file
+		dstPath := filepath.Join("uploads", filename)
 		dst, err := os.Create(dstPath)
 		if err != nil {
-			http.Error(w, "Error creating a new file in the server", http.StatusInternalServerError)
+			http.Error(w, "Error saving file", http.StatusInternalServerError)
+			fmt.Println("Error creating file on server:", err)
 			return
 		}
 		defer dst.Close()
 
-		// copy the uploaded file
-
-		// Copy the uploaded file to the server
+		// Copy the file data to the server
 		_, err = io.Copy(dst, src)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Error copying file", http.StatusInternalServerError)
+			fmt.Println("Error copying file:", err)
 			return
 		}
 
-		// collect file paths
+		// Append the saved file path
 		filePaths = append(filePaths, dstPath)
+
+		// Debugging: Confirm the file has been saved
+		fmt.Println("File saved successfully:", dstPath)
 	}
-	// insert the file paths into the database
+
+	// Store file paths in the database
 	filePathsStr := "{" + strings.Join(filePaths, ",") + "}"
 	err = saveFilePathToDB(filePathsStr, title, location, time, description, slug)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Error saving to database", http.StatusInternalServerError)
+		fmt.Println("Error saving file paths to database:", err)
 		return
 	}
 
-	// prepare the JSON response
+	// Debugging: File paths stored successfully
+	fmt.Println("File paths stored in DB:", filePaths)
+
+	// Return success response
 	response := map[string]interface{}{
-		"message":    "Files uploaded and paths stored successfully",
-		"file_paths": filePaths, // Add file paths to the response
+		"message":    "Files uploaded and stored successfully",
+		"file_paths": filePaths,
 	}
 
-	// Set content type and return the JSON response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
@@ -234,7 +243,7 @@ func GetAllEvents(w http.ResponseWriter, r *http.Request) {
 	// Calculate total pages
 	totalPages := (totalCount + pageSize - 1) / pageSize
 
-	query := "SELECT id, title, description, time, location, image_paths, created_at, updated_at, slug FROM events ORDER BY created_at DESC LIMIT $1 OFFSET $2"
+	query := "SELECT id, title, description, time, location, image_paths, created_at, slug FROM events ORDER BY created_at DESC LIMIT $1 OFFSET $2"
 	rows, err := db.Query(query, pageSize, offset)
 	if err != nil {
 		http.Error(w, "Error querying database"+err.Error(), http.StatusInternalServerError)
@@ -248,10 +257,10 @@ func GetAllEvents(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var id int
 		var title, description, imagePaths, time, location string
-		var dateCreated, updatedAt string
+		var dateCreated string
 		var slug string
 
-		err := rows.Scan(&id, &title, &description, &time, &location, &imagePaths, &dateCreated, &updatedAt, &slug)
+		err := rows.Scan(&id, &title, &description, &time, &location, &imagePaths, &dateCreated, &slug)
 		if err != nil {
 			http.Error(w, "Error scanning row", http.StatusInternalServerError)
 			return
@@ -265,7 +274,6 @@ func GetAllEvents(w http.ResponseWriter, r *http.Request) {
 			"date_created": dateCreated,
 			"time":         time,
 			"location":     location,
-			"updated_at":   updatedAt,
 			"slug":         slug,
 		}
 
@@ -381,8 +389,8 @@ func GetOneItem(w http.ResponseWriter, r *http.Request) {
 
 	defer db.Close()
 
-	err = db.QueryRow("SELECT id, title, description, time, location, image_paths, created_at, updated_at FROM events WHERE slug = $1", slug).
-		Scan(&event.ID, &event.Time, &event.Location, &event.Title, &event.Description, &event.ImagePaths, &event.CreatedAt, &event.UpdatedAt)
+	err = db.QueryRow("SELECT id, title, description, time, location, image_paths, created_at FROM events WHERE slug = $1", slug).
+		Scan(&event.ID, &event.Time, &event.Location, &event.Title, &event.Description, &event.ImagePaths, &event.CreatedAt)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

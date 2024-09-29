@@ -6,7 +6,7 @@ export function middleware(req: NextRequest) {
   const token = req.cookies.get('token')?.value
   const isLoginPage = req.nextUrl.pathname === '/login'
 
-  // If token is not present, redirect to login page
+  //If token is not present, redirect to login page
   if (!token) {
     const loginUrl = new URL('/login', req.url)
     return NextResponse.redirect(loginUrl)

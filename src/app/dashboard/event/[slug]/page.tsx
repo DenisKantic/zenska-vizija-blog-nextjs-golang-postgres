@@ -88,11 +88,16 @@ export default function BlogItem({ params: { slug } }: Props) {
     : processImagePaths(blog.image_paths)
 
   return (
-    <div className="w-full min-h-[100svh] overflow-y-scroll pb-20 focus:outline-none">
-      <p className="text-2xl text-black font-bold">{blog.title}</p>
+    <div className="w-full p-10 xxs:px-5 md:px-16 bg-white min-h-[100svh] overflow-y-scroll pb-20 focus:outline-none">
+      <p className="mt-20 text-2xl text-black text-center font-bold">
+        {blog.description}
+      </p>
+      <p className="mt-5 text-2xl text-black text-center font-bold">
+        Vrijeme: {blog.title}
+      </p>
       <p
         className="py-5 text-justify mb-5 text-gray-800"
-        dangerouslySetInnerHTML={{ __html: blog.description }}
+        dangerouslySetInnerHTML={{ __html: blog.location }}
       ></p>
       <Swiper
         modules={[Navigation, Pagination]}
@@ -124,7 +129,7 @@ export default function BlogItem({ params: { slug } }: Props) {
 
       {/* Fullscreen Overlay */}
       {fullscreen && (
-        <div className="fixed h-screen inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 focus:outline-none">
+        <div className="fixed h-screen inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
           <Swiper
             initialSlide={currentSlide}
             modules={[Navigation, Pagination]}
@@ -133,11 +138,11 @@ export default function BlogItem({ params: { slug } }: Props) {
             navigation={{}} // Enable navigation
             slidesPerView={1}
             scrollbar={{ draggable: true }}
-            className="w-full h-[90svh] focus:outline-none"
+            className="w-full h-[90svh]"
           >
             {images.map((url, index) => (
               <SwiperSlide
-                className="w-full h-[90svh] flex items-center justify-center focus:outline-none"
+                className="w-full h-[90svh] flex items-center justify-center"
                 key={index}
               >
                 <Image

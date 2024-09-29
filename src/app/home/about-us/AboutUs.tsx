@@ -1,6 +1,7 @@
-"use client";
-import Image from "next/image";
-import Link from "next/link";
+'use client'
+import Image from 'next/image'
+import Link from 'next/link'
+import Navbar from '../navigation/Navbar'
 const AboutUs = () => {
   return (
     <section id="aboutUs">
@@ -48,28 +49,29 @@ const AboutUs = () => {
           <div className="ml-1">
             <p className="mb-8">
               <span className="text-chineseBlack">
-                Udruženje {"Ženska Vizija"} je osnovano sa ciljem zaštite ženskih
-                prava, zalaganje za jednakost i ravnopravnost žena u BIH. <br />
+                Udruženje {'Ženska Vizija'} je osnovano sa ciljem zaštite
+                ženskih prava, zalaganje za jednakost i ravnopravnost žena u
+                BIH. <br />
                 Pružamo podršku ženama da prevaziđu svoja najbolnija iskustva i
                 da ih osnažimo.
               </span>
             </p>
           </div>
           <div className="flex justify-center mt-2">
-            <Link href='/about_us'>
-            <button
-              className="inline-flex items-center justify-center text-white bg-purplePizzazz 
+            <Link href="/about_us">
+              <button
+                className="inline-flex items-center justify-center text-white bg-purplePizzazz 
 							border-0 py-2 px-6 focus:outline-none hover:text-purplePizzazz hover:bg-chineseBlackLight 
               hover:bg-opacity-10 rounded-[16px] text-[16px] w-40 h-12 sm:w-48 sm:h-12"
-            >
-              Pročitaj više
-            </button>
+              >
+                Pročitaj više
+              </button>
             </Link>
           </div>
         </div>
       </div>
     </section>
-  );
-};
+  )
+}
 
-export default AboutUs;
+export default AboutUs

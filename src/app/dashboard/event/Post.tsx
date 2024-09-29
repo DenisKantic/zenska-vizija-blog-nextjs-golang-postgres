@@ -37,10 +37,10 @@ const EventList: React.FC = () => {
       const processedEvents = response.data.events.map((event) => {
         const imagePaths =
           typeof event.image_paths === 'string'
-            ? (event.image_paths
+            ? (event.image_paths as string)
                 .replace(/{|}/g, '') // Remove curly braces
                 .split(',') // Split by comma
-                .map((path: string) => path.trim()) as string[]) // Trim whitespace // Assert as string array
+                .map((path: string) => path.trim()) // Trim whitespace // Assert as string array
             : event.image_paths // If already an array, use it directly
         console.log('SLIKE', imagePaths)
         return {
@@ -99,7 +99,7 @@ const EventList: React.FC = () => {
     return `${formattedDay}/${formattedMonth}/${year}`
   }
 
-  const deleteBlog = async (id: number) => {
+  const deleteEvent = async (id: number) => {
     try {
       await axios.delete(`http://localhost:8080/deleteEvent?id=${id}`)
       console.log(`Blog with ID ${id} deleted successfully.`)
@@ -125,7 +125,7 @@ const EventList: React.FC = () => {
         {events.map((event) => (
           <div
             key={event.id}
-            className="relative group overflow-hidden text-black bg-gray-300 h-[40svh] rounded-xl"
+            className="relative group overflow-hidden text-black bg-gray-300 min-h-[40svh] rounded-xl"
           >
             <Image
               src={`http://localhost:8080/${event.image_paths[0]}`}
@@ -149,21 +149,20 @@ const EventList: React.FC = () => {
               <p className="text-md">
                 Kreirano: {formatDate(event.date_created)}
               </p>
-            </div>
-            <div className="absolute inset-0 bg-black bg-opacity-80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <div className="flex gap-5 flex-col justify-start">
+              <div className="w-full flex flex-col gap-2 overflow-hidden">
                 <Link
                   href={`/dashboard/event/${event.slug}`}
-                  className="text-white text-2xl font-bold btn btn-success"
+                  onClick={() => console.log('SLUG', event.slug)}
+                  className="text-white text-2xl w-full font-bold btn btn-info"
                 >
                   Pročitaj
                 </Link>
-                <span className="text-white text-2xl font-bold btn btn-info">
-                  Uredi
-                </span>
                 <button
-                  onClick={() => deleteBlog(event.id)}
-                  className="text-white text-2xl font-bold btn btn-error"
+                  onClick={async () => {
+                    const response = await deleteEvent(event.id)
+                    window.location.reload()
+                  }}
+                  className="text-white text-2xl w-full font-bold btn btn-error"
                 >
                   Obriši
                 </button>

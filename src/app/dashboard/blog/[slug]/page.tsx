@@ -86,7 +86,7 @@ export default function BlogItem({ params: { slug } }: Props) {
     : processImagePaths(blog.image_paths)
 
   return (
-    <div className="w-full min-h-[100svh] overflow-y-scroll pb-20 focus:outline-none">
+    <div className="w-full p-10 xxs:px-5 md:px-16 bg-white min-h-[100svh] overflow-y-scroll pb-20 focus:outline-none">
       <p className="text-2xl text-black font-bold">{blog.title}</p>
       <p
         className="py-5 text-justify mb-5 text-gray-800"
@@ -100,8 +100,6 @@ export default function BlogItem({ params: { slug } }: Props) {
         navigation={{}} // Enable navigation
         slidesPerView={1}
         scrollbar={{ draggable: true }}
-        onSlideChange={() => console.log('slide change')}
-        onSwiper={(swiper) => console.log(swiper)}
       >
         {images.map((url, index) => (
           <SwiperSlide className="w-full h-[50vh]" key={index}>
