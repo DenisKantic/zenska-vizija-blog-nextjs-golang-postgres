@@ -1,0 +1,43 @@
+services:
+  api:
+    build:
+      context: ./backend
+      dockerfile: go.dockerfile
+    ports:
+      - '8080:8080'
+    depends_on:
+      - postgres
+    volumes:
+      - ./blogs:/app/blogs
+      - ./events:/app/events
+      - ./uploads:/app/uploads
+    develop:
+      watch:
+        - action: rebuild
+          path: ./backend
+          target: /app/backend
+          ignore:
+            - vendor/
+            - .git/
+    networks:
+      - my_network
+
+  postgres:
+    image: postgres:16
+    container_name: zenskavizija
+    environment:
+      POSTGRES_USER: zenskavizija
+      POSTGRES_PASSWORD: zenskavizija1;
+      POSTGRES_DB: zenskavizijadb
+    ports:
+      - '5434:5434'
+    volumes:
+      - zenskavizija:/var/lib/postgresql/data
+    networks:
+      - my_network
+
+networks:
+  my_network:
+
+volumes:
+  zenskavizija:

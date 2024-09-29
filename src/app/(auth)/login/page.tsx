@@ -64,7 +64,7 @@ const Login = () => {
 
     console.log('WHICH SENDING FILES', email, password)
 
-    await login(formData)
+    const response = await login(formData)
   }
 
   return (
@@ -149,13 +149,14 @@ const Login = () => {
         </Link>
 
         <div className="w-full mt-5 p-3 flex flex-row justify-between items-center">
-          <button
-            className="w-[45%] bg-none border-[2px] border-[#F93EDF] rounded-full py-2 text-[#F93EDF]
+          <Link
+            href="/"
+            className="w-[45%] text-center bg-none border-[2px] border-[#F93EDF] rounded-full py-2 text-[#F93EDF]
                        hover:bg-[#F93EDF] hover:text-white hover:font-bold
                       xxs:text-sm sm:text-lg"
           >
-            Napusti
-          </button>
+            Početna
+          </Link>
 
           <button
             className="w-[45%] bg-[#F93EDF] text-white border-[2px] border-[#F93EDF] rounded-full py-2 

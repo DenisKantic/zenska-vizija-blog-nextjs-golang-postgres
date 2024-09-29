@@ -18,11 +18,7 @@ import (
 )
 
 var (
-	DB_USER     string
-	DB_PASSWORD string
-	DB_NAME     string
-	DB_HOST     string
-	DB_PORT     string
+	DB_CONNECT string
 )
 
 type Blog struct {
@@ -31,7 +27,6 @@ type Blog struct {
 	Description string `json:"description"`
 	ImagePaths  string `json:"image_paths"`
 	CreatedAt   string `json:"created_at"`
-	UpdatedAt   string `json:"updated_at"`
 }
 
 func init() {
@@ -40,19 +35,16 @@ func init() {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
 
-	DB_USER = os.Getenv("DB_USER")
-	DB_PASSWORD = os.Getenv("DB_PASSWORD")
-	DB_NAME = os.Getenv("DB_NAME")
-	DB_HOST = os.Getenv("DB_HOST")
-	DB_PORT = os.Getenv("DB_PORT")
+	DB_CONNECT = os.Getenv("DB_CONNECT")
+
 }
 
 func dbConn() (*sql.DB, error) {
-	psqlInfo := "host=%s port=%s user=%s password=%s dbname=%s sslmode=disable"
-	psqlInfo = fmt.Sprintf(psqlInfo, DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME)
-	fmt.Println("Connection string:", psqlInfo)
+	
 
-	db, err := sql.Open("postgres", psqlInfo)
+	fmt.Println("Connection string:", DB_CONNECT)
+
+	db, err := sql.Open("postgres", DB_CONNECT)
 	if err != nil {
 		return nil, fmt.Errorf("error opening connection: %w", err)
 	}
@@ -60,7 +52,7 @@ func dbConn() (*sql.DB, error) {
 }
 
 func UploadBlogPost(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
@@ -110,7 +102,7 @@ func UploadBlogPost(w http.ResponseWriter, r *http.Request) {
 		src, err := file.Open()
 		if err != nil {
 			http.Error(w, "Error opening the file", http.StatusInternalServerError)
-			return
+			return 
 		}
 
 		defer src.Close()
@@ -220,7 +212,7 @@ func GetAllBlogs(w http.ResponseWriter, r *http.Request) {
 	// Calculate total pages
 	totalPages := (totalCount + pageSize - 1) / pageSize
 
-	query := "SELECT id, title, description, image_paths, created_at, updated_at, slug FROM blogs ORDER BY created_at DESC LIMIT $1 OFFSET $2"
+	query := "SELECT ID, title, description, image_paths, created_at, slug FROM blogs ORDER BY created_at DESC LIMIT $1 OFFSET $2"
 	rows, err := db.Query(query, pageSize, offset)
 	if err != nil {
 		http.Error(w, "Error querying database"+err.Error(), http.StatusInternalServerError)
@@ -234,10 +226,10 @@ func GetAllBlogs(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var id int
 		var title, description, imagePaths string
-		var dateCreated, updatedAt string
+		var dateCreated string
 		var slug string
 
-		err := rows.Scan(&id, &title, &description, &imagePaths, &dateCreated, &updatedAt, &slug)
+		err := rows.Scan(&id, &title, &description, &imagePaths, &dateCreated, &slug)
 		if err != nil {
 			http.Error(w, "Error scanning row", http.StatusInternalServerError)
 			return
@@ -249,7 +241,6 @@ func GetAllBlogs(w http.ResponseWriter, r *http.Request) {
 			"description":  description,
 			"image_paths":  imagePaths,
 			"date_created": dateCreated,
-			"updated_at":   updatedAt,
 			"slug":         slug,
 		}
 
@@ -304,7 +295,7 @@ func DeleteBlog(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Delete the blog post from the database
-	_, err = db.Exec("DELETE FROM blogs WHERE id = $1", id)
+	_, err = db.Exec("DELETE FROM blogs WHERE ID = $1", id)
 	if err != nil {
 		http.Error(w, "Error deleting blog from database", http.StatusInternalServerError)
 		return
@@ -364,8 +355,8 @@ func GetOneItem(w http.ResponseWriter, r *http.Request) {
 
 	defer db.Close()
 
-	err = db.QueryRow("SELECT id, title, description, image_paths, created_at, updated_at FROM blogs WHERE slug = $1", slug).
-		Scan(&blog.ID, &blog.Title, &blog.Description, &blog.ImagePaths, &blog.CreatedAt, &blog.UpdatedAt)
+	err = db.QueryRow("SELECT ID, title, description, image_paths, created_at FROM blogs WHERE slug = $1", slug).
+		Scan(&blog.ID, &blog.Title, &blog.Description, &blog.ImagePaths, &blog.CreatedAt)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

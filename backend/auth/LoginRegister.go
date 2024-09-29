@@ -12,12 +12,7 @@ import (
 )
 
 var (
-	DB_USER     string
-	DB_PASSWORD string
-	DB_NAME     string
-	DB_HOST     string
-	DB_PORT     string
-	JWT_SECRET  string
+	JWT_SECRET string
 )
 
 type User struct {
@@ -37,18 +32,11 @@ func init() {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
 
-	DB_USER = os.Getenv("DB_USER")
-	DB_PASSWORD = os.Getenv("DB_PASSWORD")
-	DB_NAME = os.Getenv("DB_NAME")
-	DB_HOST = os.Getenv("DB_HOST")
-	DB_PORT = os.Getenv("DB_PORT")
 	JWT_SECRET = os.Getenv("JWT_SECRET")
 }
 
 func dbCon() (*sql.DB, error) {
-	psqlInfo := "host=%s port=%s user=%s password=%s dbname=%s sslmode=disable"
-	psqlInfo = fmt.Sprintf(psqlInfo, DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME)
-	fmt.Println("Connection string:", psqlInfo)
+	psqlInfo := "postgresql://zenskavizija:zenskavizija1;@postgres:5434/zenskavizijadb?sslmode=disable"
 
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
@@ -88,43 +76,6 @@ func VerifyToken(next http.HandlerFunc) http.HandlerFunc {
 
 		next.ServeHTTP(w, r)
 	}
-}
-
-func Register(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-	w.Header().Set("Access-Control-Allow-Methods", "POST")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-	w.Header().Set("Access-Control-Allow-Credentials", "true") // Allow credentials
-
-	if r.Method == http.MethodOptions {
-		return
-	}
-
-	err := r.ParseMultipartForm(100 << 20) // 100 MB max
-	if err != nil {
-		http.Error(w, "Error processing form", http.StatusInternalServerError)
-		return
-	}
-
-	email := r.FormValue("email")
-	password := r.FormValue("password")
-
-	db, err := dbCon()
-	if err != nil {
-		http.Error(w, "error connecting to database", http.StatusInternalServerError)
-		return
-	}
-
-	defer db.Close()
-
-	_, err = db.Exec("INSERT INTO users (email, password) VALUES ($1,$2)", email, password)
-	if err != nil {
-		http.Error(w, "Error inserting user into database", http.StatusInternalServerError)
-		return
-	}
-	fmt.Print("User is created")
-
-	w.WriteHeader(http.StatusOK)
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
@@ -188,7 +139,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	w.Header().Set("Access-Control-Allow-Credentials", "true") // Allow credentials
@@ -201,6 +152,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 		Name:     "token",
 		Value:    "",
 		HttpOnly: true,
+		Secure:   true,
 		Path:     "/",
 		MaxAge:   -1,
 	})
