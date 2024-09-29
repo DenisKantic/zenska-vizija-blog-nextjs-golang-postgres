@@ -66,13 +66,6 @@ const Navbar = ({ showAside }: any) => {
             </Link>
 
             <li
-              onClick={() => scrollTo('gallery')}
-              className="cursor-pointer hover:bg-crayola hover:text-white rounded-[16px] px-5 py-3"
-            >
-              <a className="text-[16px]">Galerija</a>
-            </li>
-
-            <li
               onClick={() => scrollTo('contact')}
               className="cursor-pointer hover:bg-crayola hover:text-white rounded-[16px] px-5 py-3"
             >

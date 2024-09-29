@@ -100,8 +100,6 @@ export default function BlogItem({ params: { slug } }: Props) {
         navigation={{}} // Enable navigation
         slidesPerView={1}
         scrollbar={{ draggable: true }}
-        onSlideChange={() => console.log('slide change')}
-        onSwiper={(swiper) => console.log(swiper)}
       >
         {images.map((url, index) => (
           <SwiperSlide className="w-full h-[50vh]" key={index}>

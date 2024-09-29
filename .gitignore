@@ -30,6 +30,7 @@ yarn-error.log*
 
 # ignore images uploaded on file server
 backend/uploads
+backend/events
 
 # vercel
 .vercel

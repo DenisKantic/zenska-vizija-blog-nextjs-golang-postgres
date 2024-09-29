@@ -40,7 +40,6 @@ const BlogList: React.FC = () => {
                 .split(',') // Split by comma
                 .map((path: string) => path.trim()) as string[]) // Trim whitespace // Assert as string array
             : blog.image_paths // If already an array, use it directly
-        console.log('SLIKE', imagePaths)
         return {
           ...blog,
           image_paths: imagePaths,
