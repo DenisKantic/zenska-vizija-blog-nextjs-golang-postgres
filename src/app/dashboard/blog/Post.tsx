@@ -1,128 +1,191 @@
-"use client";
-import React, { useState, useEffect } from 'react'
-import { getDocs, collection,query, orderBy, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '@/app/FirebaseConfig';
-import Post from './interface'
-import Image from 'next/image';
-import { RiDeleteBinLine } from "react-icons/ri";
-import { FaEdit } from "react-icons/fa";
-import { useRouter } from 'next/navigation';
-import ReactPaginate from 'react-paginate'
-import { AiFillLeftCircle, AiFillRightCircle } from "react-icons/ai";
-import { IconContext } from "react-icons";
-async function fetchDataFirestore(){
-  const listCollection = collection(db, "blog");
-  const querySnapshot = await getDocs(query(listCollection, orderBy("dateCreated", "desc")))
-  const list:any = [];
-      
-  querySnapshot.forEach((doc)=>{
-    const newList = doc.data();
-    list.push({id: doc.id, ...newList})
-  })
+'use client'
+import React, { useEffect, useState, useTransition } from 'react'
+import Image from 'next/image'
+import axios from 'axios'
+import LoadingSpinner from '@/app/spinner/LoadingSpinner'
+import Link from 'next/link'
 
-  return list;
+interface Blog {
+  id: number
+  title: string
+  description: string
+  image_paths: string[] // Array of image paths
+  date_created: string
+  updated_at: string
+  slug: string
 }
 
-const UserDataFetcher: React.FC = () => {
-  const [userData, setUserData] = useState<Post[]>([]);
-  const router = useRouter()
-  const items = userData;
+const PAGE_SIZE = 16
 
-  const [itemOffset, setItemOffset] = useState(0);
-  const itemsPerPage = 6;
+const BlogList: React.FC = () => {
+  const [blogs, setBlogs] = useState<Blog[]>([])
+  const [page, setPage] = useState<number>(1)
+  const [totalPages, setTotalPages] = useState<number>(1)
+  const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState<boolean>(true) // loading state
+  const [cache, setCache] = useState<Record<number, Blog[]>>({}) // state for caching previous fetched pages
 
-  const endOffset = itemOffset + itemsPerPage;
-  const currentItems = items.slice(itemOffset, endOffset);
-  const pageCount = Math.ceil(items.length / itemsPerPage);
-
-
-  const handlePageClick = (event: any) => {
-    const newOffset = (event.selected * itemsPerPage) % items.length;
-    setItemOffset(newOffset);
-  };
-
-
-    useEffect(()=>{
-        async function fetchData(){
-          const data: Post[] = await fetchDataFirestore();
-          setUserData(data);
+  const fetchBlogs = async (page: number) => {
+    try {
+      const response = await axios.get<{
+        blogs: Blog[]
+        totalPages: number
+        currentPage: number
+      }>(`http://localhost:8080/blogs?page=${page}&pageSize=${PAGE_SIZE}`)
+      const processedBlogs = response.data.blogs.map((blog) => {
+        const imagePaths =
+          typeof blog.image_paths === 'string'
+            ? (blog.image_paths as string)
+                .replace(/{|}/g, '') // Remove curly braces
+                .split(',') // Split by comma
+                .map((path: string) => path.trim()) // Trim whitespace // Assert as string array
+            : blog.image_paths // If already an array, use it directly
+        return {
+          ...blog,
+          image_paths: imagePaths,
         }
-        fetchData();
-    },[])
+      })
 
-    async function deleteFromDatabase(id:any){
-        try{
-          await deleteDoc(doc(db, "blog", id));
-          window.location.reload()
-          return id;
-        } catch (error){
-          alert("error")
-          console.log(error);
-        }
-      }
- 
+      setCache((prevCache) => ({
+        ...prevCache,
+        [page]: processedBlogs,
+      }))
+
+      setBlogs(processedBlogs)
+      setIsLoading(false)
+      setTotalPages(response.data.totalPages)
+    } catch (error) {
+      if (axios.isAxiosError(error)) setError('Greška u učitavanju sa servera.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    // fetch blogs for the current page if not in cache
+    if (!cache[page]) {
+      fetchBlogs(page)
+    } else {
+      setBlogs(cache[page])
+      setIsLoading(false)
+    }
+  }, [page, cache])
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPage(newPage)
+    }
+  }
+
+  if (isLoading) return <LoadingSpinner />
+  if (error) return <p className="text-2xl text-red-600 font-bold">{error}</p>
+
+  function formatDate(dateString: string): string {
+    const date = new Date(dateString)
+
+    // Extract day, month, and year
+    const day = date.getUTCDate()
+    const month = date.getUTCMonth() + 1 // Months are zero-based
+    const year = date.getUTCFullYear()
+
+    // Format day and month with leading zeroes if needed
+    const formattedDay = day.toString().padStart(2, '0')
+    const formattedMonth = month.toString().padStart(2, '0')
+
+    // Return formatted date in "day/month/year" format
+    return `${formattedDay}/${formattedMonth}/${year}`
+  }
+
+  const deleteBlog = async (id: number) => {
+    try {
+      await axios.delete(`http://localhost:8080/deleteBlog?id=${id}`)
+      console.log(`Blog with ID ${id} deleted successfully.`)
+      fetchBlogs(id)
+    } catch (error) {
+      console.log('error while deleting the blog', error)
+    }
+  }
+
   return (
-    <>
-    <div className='grid items-center justify-center w-full h-full grid-flow-row auto-cols-max 
-    xxs:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xxl:grid-cols-4 md:gap-10
-    xxs:mt-0 md:mt-10'>
-        {currentItems.map((data)=>(
-         
-        <div className='flex flex-col justify-around bg-red-100 mt-10' key={data.id}>
-        <div className='h-full rounded-xl'>
-            <Image src={data.imageURL} height={50} width={50}
-            alt='test' unoptimized priority={false}
-            className='w-full h-[230px] object-cover'
+    <div className="relative w-full min-h-[100svh] pb-20 focus:outline-none">
+      <div
+        className={
+          isLoading
+            ? 'hidden'
+            : 'w-full grid gap-10 xxs:grid-cols-1 md:grid-cols-2 xl:grid-cols-4'
+        }
+      >
+        {isLoading && <LoadingSpinner />}
+        {blogs.map((blog) => (
+          <div
+            key={blog.id}
+            className="relative group overflow-hidden text-black bg-gray-300 min-h-[40svh] rounded-xl"
+          >
+            <Image
+              src={`http://localhost:8080/${blog.image_paths[0]}`}
+              alt={`Blog Image ${blog.title}`}
+              unoptimized
+              className="w-full h-[30vh] object-cover bg-gray-400 rounded-t-xl"
+              height={150} // Adjust as needed
+              width={150} // Adjust as needed
+              onError={(e) => {
+                console.error(
+                  'Error loading image:',
+                  (e.target as HTMLImageElement).src
+                )
+              }}
             />
-            <div className='p-2 h-full overflow-hidden'>
-            <h1 className='text-lg font-bold'>Naslov:<span className='font-normal ml-2'>{data.title.substring(0,15)}...</span></h1>
-            <p className='text-md font-bold flex'>Tekst: <span className='font-normal ml-2' dangerouslySetInnerHTML={{__html: data.description.substring(0,20)}}>
-            </span>...</p>
-            <p  className='text-lg font-bold'>Kreirano: <span className='font-normal ml-2'>{data.dateCreated}</span></p>
+            <div className="p-4 h-full">
+              <p className="text-2xl font-bold text-black">
+                {blog.title.substring(0, 12) + '...'}
+              </p>
+
+              <p className="text-md">
+                Kreirano: {formatDate(blog.date_created)}
+              </p>
+              <div className="w-full flex flex-col gap-2 overflow-hidden">
+                <Link
+                  href={`/dashboard/blog/${blog.slug}`}
+                  className="text-white text-2xl w-full font-bold btn btn-info"
+                >
+                  Pročitaj
+                </Link>
+                <button
+                  onClick={async () => {
+                    const response = await deleteBlog(blog.id)
+                    window.location.reload()
+                  }}
+                  className="text-white text-2xl w-full font-bold btn btn-error"
+                >
+                  Obriši
+                </button>
+              </div>
             </div>
-         </div>
-
-          <div className='flex flex-row'>
-              <button className='w-[50%] flex items-center justify-center bg-red-400 py-3 cursor-pointer
-              hover:bg-red-600' type='button'
-                onClick={()=>deleteFromDatabase(data.id)}
-              >
-                <RiDeleteBinLine />
-              </button>
-
-              <button className='w-[50%] flex items-center justify-center bg-blue-200 py-3 cursor-pointer
-              hover:bg-blue-400' type='button'
-                onClick={()=> router.push(`/dashboard/editBlogPost/${data.id}`)}
-              ><FaEdit /></button>
-          </div>
           </div>
         ))}
+      </div>
+      <div className="absolute bottom-0 left-0 w-full flex items-center justify-center">
+        <button
+          className="btn btn-secondary  disabled:text-black disabled:bg-pink-200 text-black text-md"
+          onClick={() => handlePageChange(page - 1)}
+          disabled={page <= 1}
+        >
+          Prethodna
+        </button>
+        <span className="text-black text-sm px-4">
+          {' '}
+          Stranica {page} od {totalPages}{' '}
+        </span>
+        <button
+          className="btn btn-primary text-black disabled:text-black disabled:bg-pink-200 text-md"
+          onClick={() => handlePageChange(page + 1)}
+          disabled={page >= totalPages}
+        >
+          Sljedeća
+        </button>
+      </div>
     </div>
-    {
-      items.length >= itemsPerPage ? <ReactPaginate
-      breakLabel="..."
-      pageClassName={"page-item"}
-    activeClassName={"active"}
-      onPageChange={handlePageClick}
-      pageRangeDisplayed={5}
-      pageCount={pageCount}
-      previousLabel={
-        <IconContext.Provider value={{ color: "#B8C1CC", size: "36px" }}>
-          <AiFillLeftCircle />
-        </IconContext.Provider>
-      }
-      nextLabel={
-        <IconContext.Provider value={{ color: "#B8C1CC", size: "36px" }}>
-          <AiFillRightCircle />
-        </IconContext.Provider>
-      }
-      containerClassName={"pagination"}
-      renderOnZeroPageCount={null}
-    /> : null
-    }
-    
-  </>
   )
- }
+}
 
-export default UserDataFetcher;
+export default BlogList

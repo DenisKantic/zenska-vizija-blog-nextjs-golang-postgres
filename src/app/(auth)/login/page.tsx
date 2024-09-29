@@ -1,59 +1,71 @@
-"use client";
-import React, { useEffect, useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/app/AuthContext";
+'use client'
+import React, { useEffect, useState } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/app/AuthContext'
 
 const Login = () => {
-  const router = useRouter();
-  const { user, login } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [emailError, setEmailError] = useState("");
-  const [passwordError, setPasswordError] = useState("");
+  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [emailError, setEmailError] = useState('')
+  const [passwordError, setPasswordError] = useState('')
+  const { login } = useAuth()
 
-  const checkUserState = () => {
-    if (user) {
-      router.push("/dashboard");
-    } else {
-      router.push("/login");
-    }
-  };
+  // const checkUserState = () => {
+  //   if (user) {
+  //     router.push("/dashboard");
+  //   } else {
+  //     router.push("/login");
+  //   }
+  // };
 
-  useEffect(() => {
-    checkUserState();
-  });
+  // useEffect(() => {
+  //   checkUserState();
+  // });
 
-  const handleSubmit = async (e: any) => {
-    e.preventDefault();
+  // const handleSubmit = async (e: any) => {
+  //   e.preventDefault();
 
-    console.log(user);
-    try {
-      await login(email, password);
-      router.push("/dashboard");
-    } catch (error: any) {
-      console.log("error u handle submit", error);
-      switch (error.code) {
-        case "auth/user-not-found":
-        case "auth/missing-password":
-          setEmailError("");
-          setPasswordError("Unesite vasu lozinku.");
-          break;
-        case "auth/invalid-credential":
-          setEmailError("Neispravan email ili lozinka.");
-          setPasswordError("Neispravan email ili lozinka.");
-          break;
-        case "auth/invalid-email":
-          setEmailError("Unesite vasu email adresu.");
-          setPasswordError("");
-          break;
-        default:
-          setEmailError("Doslo je do greske, pokusajte jos jednom.");
-          setPasswordError("");
-      }
-    }
-  };
+  //   console.log(user);
+  //   try {
+  //     await login(email, password);
+  //     router.push("/dashboard");
+  //   } catch (error: any) {
+  //     console.log("error u handle submit", error);
+  //     switch (error.code) {
+  //       case "auth/user-not-found":
+  //       case "auth/missing-password":
+  //         setEmailError("");
+  //         setPasswordError("Unesite vasu lozinku.");
+  //         break;
+  //       case "auth/invalid-credential":
+  //         setEmailError("Neispravan email ili lozinka.");
+  //         setPasswordError("Neispravan email ili lozinka.");
+  //         break;
+  //       case "auth/invalid-email":
+  //         setEmailError("Unesite vasu email adresu.");
+  //         setPasswordError("");
+  //         break;
+  //       default:
+  //         setEmailError("Doslo je do greske, pokusajte jos jednom.");
+  //         setPasswordError("");
+  //     }
+  //   }
+  // };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+
+    const formData = new FormData()
+    formData.append('email', email)
+    formData.append('password', password)
+
+    console.log('WHICH SENDING FILES', email, password)
+
+    const response = await login(formData)
+  }
 
   return (
     <div
@@ -88,6 +100,7 @@ const Login = () => {
 
         <input
           type="email"
+          name="email"
           required
           value={email}
           placeholder="Unesite Vaš mail"
@@ -96,7 +109,7 @@ const Login = () => {
         xxs:text-sm xxs:p-2 sm:p-7 sm:text-xl sm:py-3"
           onChange={(e) => setEmail(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") handleSubmit(e);
+            //  if (e.key === "Enter") handleSubmit(e);
           }}
         />
         {emailError && (
@@ -109,6 +122,7 @@ const Login = () => {
         <input
           type="password"
           required
+          name="password"
           value={password}
           placeholder="Šifra"
           className="w-full mt-5 py-3 p-7 text-[#C86DD7] text-xl rounded-full outline-none cursor-pointer
@@ -116,7 +130,7 @@ const Login = () => {
         xxs:text-sm xxs:p-2 sm:p-7 sm:text-xl sm:py-3"
           onChange={(e) => setPassword(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") handleSubmit(e);
+            //   if (e.key === "Enter") handleSubmit(e);
           }}
         />
         {passwordError && (
@@ -135,23 +149,24 @@ const Login = () => {
         </Link>
 
         <div className="w-full mt-5 p-3 flex flex-row justify-between items-center">
-          <button
-            className="w-[45%] bg-none border border-[2px] border-[#F93EDF] rounded-full py-2 text-[#F93EDF]
+          <Link
+            href="/"
+            className="w-[45%] text-center bg-none border-[2px] border-[#F93EDF] rounded-full py-2 text-[#F93EDF]
                        hover:bg-[#F93EDF] hover:text-white hover:font-bold
                       xxs:text-sm sm:text-lg"
           >
-            Napusti
-          </button>
+            Početna
+          </Link>
 
           <button
-            className="w-[45%] bg-[#F93EDF] text-white border border-[2px] border-[#F93EDF] rounded-full py-2 
+            className="w-[45%] bg-[#F93EDF] text-white border-[2px] border-[#F93EDF] rounded-full py-2 
                        hover:bg-transparent hover:border-[#F93EDF] hover:font-bold hover:text-[#F93EDF]
                        xxs:text-sm sm:text-lg"
             type="submit"
             onKeyDown={(e) => {
-              if (e.key === "Enter") handleSubmit(e);
+              //     if (e.key === "Enter") handleSubmit(e);
             }}
-            onClick={handleSubmit}
+            //  onClick={handleSubmit}
           >
             Prijavi se
           </button>
@@ -169,8 +184,7 @@ const Login = () => {
         />
       </div>
     </div>
-  );
-};
+  )
+}
 
-Login.requireAuth = true;
-export default Login;
+export default Login

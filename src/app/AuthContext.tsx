@@ -1,66 +1,110 @@
-"use client";
-import { createContext, useContext, useEffect, useState } from "react";
+'use client'
+import { useRouter } from 'next/navigation'
 import {
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
-  sendPasswordResetEmail,
-} from "firebase/auth";
-import { auth } from "./FirebaseConfig";
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from 'react'
+import axios from 'axios'
 
-const AuthContext = createContext<any>({});
+interface AuthContextType {
+  isAuthenticated: boolean
+  login: (formData: FormData) => Promise<void>
+  register: (formData: FormData) => Promise<void>
+  logout: () => Promise<void>
+}
 
-export const useAuth = () => useContext(AuthContext);
+// default value for context
+const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-export const AuthContextProvider = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+interface AuthProviderProps {
+  children: ReactNode
+}
+
+export function AuthProvider({ children }: AuthProviderProps) {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
+  const router = useRouter()
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUser({
-          uid: user.uid,
-          email: user.email,
-        });
+    const checkAuth = async () => {
+      try {
+        // const response = await axios.post()
+      } catch (error) {}
+    }
+    checkAuth()
+  }, [])
+
+  const register = async (formData: FormData) => {
+    try {
+      const response = await axios.post(
+        'http://localhost:3000/register',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          withCredentials: true,
+        }
+      )
+      return response.status
+    } catch (error: any) {
+      console.log('error registering user', error)
+      return error.response?.status || 500
+    }
+  }
+
+  const login = async (formData: FormData): Promise<void> => {
+    console.log('SENT FORM DATA', formData)
+
+    try {
+      const response = await axios.post(
+        'http://localhost:8080/login',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          withCredentials: true,
+        }
+      )
+
+      if (response.status === 200) {
+        setIsAuthenticated(true)
+        router.push('/dashboard')
       } else {
-        setUser(null);
+        setIsAuthenticated(false)
+        router.push('/login')
       }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  const signup = (email: string, password: string) => {
-    return createUserWithEmailAndPassword(auth, email, password);
-  };
-
-  const login = (email: string, password: string) => {
-    return signInWithEmailAndPassword(auth, email, password);
-  };
+    } catch (error: any) {
+      setIsAuthenticated(false)
+      return error.response?.status || 500
+    }
+  }
 
   const logout = async () => {
-    setUser(null);
-    await signOut(auth);
-  };
-
-  const forgotPassword = (email: string) => {
-    return sendPasswordResetEmail(auth, email, {
-      url: "http://localhost:3000/login",
-    });
-  };
+    try {
+      await axios.post('http://localhost:8080/logout', null, {
+        withCredentials: true,
+      })
+      setIsAuthenticated(false)
+    } catch (error) {
+      console.log('error logging out', error)
+    }
+  }
 
   return (
-    <AuthContext.Provider
-      value={{ user, login, logout, signup, forgotPassword }}
-    >
-      {loading ? null : children}
+    <AuthContext.Provider value={{ isAuthenticated, register, login, logout }}>
+      {children}
     </AuthContext.Provider>
-  );
-};
+  )
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext)
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an authprovider')
+  }
+  return context
+}

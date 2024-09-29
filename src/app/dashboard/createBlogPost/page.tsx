@@ -8,6 +8,7 @@ import { SaveBlogToDB } from '../../../../actions/saveBlogData'
 // Import Swiper React components
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Pagination } from 'swiper/modules'
+import { toast } from 'react-toastify' // Import react-toastify
 
 // Import Swiper styles
 import 'swiper/css'
@@ -91,13 +92,20 @@ const CreatePost = () => {
     const formElement = e?.target as HTMLFormElement
     if (formElement) {
       const formData = new FormData(formElement)
-      const response = await SaveBlogToDB(formData, text)
+      const result = await SaveBlogToDB(formData, text)
+
+      if (result.success) {
+        toast.success('Objava uspješno kreirana!')
+        router.push('/dashboard/blog')
+      } else {
+        toast.error('Desila se greška')
+      }
     }
   }
 
   return (
     <div
-      className="w-full h-full overflow-y-scroll 
+      className="w-full h-full overflow-y-scroll text-black 
                     xxs:p-1 md:p-10"
     >
       <h1 className="text-4xl">Kreiraj objavu</h1>
@@ -110,9 +118,8 @@ const CreatePost = () => {
         <input
           type="text"
           name="title"
-          required
           placeholder="Unesite Vaš naslov"
-          className="mt-5 text-[#C86DD7] text-xl rounded-full outline-none
+          className="mt-5 text-[#C86DD7] bg-white text-xl rounded-full outline-none
           hover:outline-1 hover:outline-[#F93EDF] focus:outline-[#AC009B]
           xxs:text-sm xxs:p-2 xxs:w-full sm:p-7 sm:text-xl sm:py-3 lg:w-[80%] xl:w-[50%]"
           onChange={(e) => setTitle(e.target.value)}
@@ -158,10 +165,7 @@ const CreatePost = () => {
             spaceBetween={0}
             keyboard
             pagination={{ clickable: true }}
-            navigation={{
-              prevEl: '.swiper-button-prev', // Custom class for previous button
-              nextEl: '.swiper-button-next', // Custom class for next button
-            }} // Enable navigation
+            navigation={{}} // Enable navigation
             slidesPerView={1}
             scrollbar={{ draggable: true }}
             onSlideChange={() => console.log('slide change')}
@@ -188,9 +192,6 @@ const CreatePost = () => {
                 </button>
               </SwiperSlide>
             ))}
-            {/* Custom Navigation Buttons */}
-            <div className="swiper-button-prev bg-white text-white p-6 hover:bg-gray-200 btn rounded-full absolute top-1/2 left-2"></div>
-            <div className="swiper-button-next bg-white text-white p-6 hover:bg-gray-200 btn rounded-full absolute top-1/2 right-2"></div>
           </Swiper>
         </div>
 
