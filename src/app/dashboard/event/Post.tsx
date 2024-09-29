@@ -37,10 +37,10 @@ const EventList: React.FC = () => {
       const processedEvents = response.data.events.map((event) => {
         const imagePaths =
           typeof event.image_paths === 'string'
-            ? (event.image_paths
+            ? (event.image_paths as string)
                 .replace(/{|}/g, '') // Remove curly braces
                 .split(',') // Split by comma
-                .map((path: string) => path.trim()) as string[]) // Trim whitespace // Assert as string array
+                .map((path: string) => path.trim()) // Trim whitespace // Assert as string array
             : event.image_paths // If already an array, use it directly
         console.log('SLIKE', imagePaths)
         return {

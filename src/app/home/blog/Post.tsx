@@ -35,10 +35,10 @@ const BlogList: React.FC = () => {
       const processedBlogs = response.data.blogs.map((blog) => {
         const imagePaths =
           typeof blog.image_paths === 'string'
-            ? (blog.image_paths
+            ? (blog.image_paths as string)
                 .replace(/{|}/g, '') // Remove curly braces
                 .split(',') // Split by comma
-                .map((path: string) => path.trim()) as string[]) // Trim whitespace // Assert as string array
+                .map((path: string) => path.trim()) // Trim whitespace // Assert as string array
             : blog.image_paths // If already an array, use it directly
         console.log('SLIKE', imagePaths)
         return {

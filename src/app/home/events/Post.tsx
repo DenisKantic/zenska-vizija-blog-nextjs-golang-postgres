@@ -37,10 +37,10 @@ const EventList: React.FC = () => {
       const processedEvents = response.data.events.map((event) => {
         const imagePaths =
           typeof event.image_paths === 'string'
-            ? (event.image_paths
+            ? (event.image_paths as string)
                 .replace(/{|}/g, '') // Remove curly braces
                 .split(',') // Split by comma
-                .map((path: string) => path.trim()) as string[]) // Trim whitespace // Assert as string array
+                .map((path: string) => path.trim()) // Trim whitespace // Assert as string array
             : event.image_paths // If already an array, use it directly
         console.log('SLIKE', imagePaths)
         return {
@@ -140,7 +140,7 @@ const EventList: React.FC = () => {
             <div className="absolute inset-0 bg-black bg-opacity-80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               <div className="flex gap-5 flex-col justify-start">
                 <Link
-                  href={`/dashboard/event/${event.slug}`}
+                  href={`/home/events/${event.slug}`}
                   className="text-white text-2xl font-bold btn btn-success"
                 >
                   Pročitaj
