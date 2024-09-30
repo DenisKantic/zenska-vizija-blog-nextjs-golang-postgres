@@ -29,7 +29,7 @@ type Props = {
 const fetchBlogItem = async (slug: string): Promise<Blog | null> => {
   try {
     const response = await axios.get<Blog>(
-      `http://localhost:8080/getBlogItem/${slug}?slug=${slug}`
+      `https://www.zenska-vizija.com/api/getBlogItem/${slug}?slug=${slug}`
     )
     return response.data
   } catch (error) {
@@ -108,7 +108,7 @@ export default function BlogItem({ params: { slug } }: Props) {
               height={50}
               width={50}
               className="w-[90%] mx-auto h-[50svh] object-cover cursor-pointer"
-              src={`http://localhost:8080/${url}`}
+              src={`https://www.zenska-vizija.com/api/${url}`}
               onClick={() => openFullscreen(index)} // Open fullscreen on click
             />
           </SwiperSlide>
@@ -141,7 +141,7 @@ export default function BlogItem({ params: { slug } }: Props) {
                   height={1000}
                   width={1000}
                   className="p-5 object-contain h-[85svh] w-[90%] mx-auto"
-                  src={`http://localhost:8080/${url}`}
+                  src={`https://www.zenska-vizija.com/api/${url}`}
                 />
               </SwiperSlide>
             ))}
