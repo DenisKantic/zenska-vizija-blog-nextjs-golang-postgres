@@ -33,7 +33,9 @@ const EventList: React.FC = () => {
         events: Event[]
         totalPages: number
         currentPage: number
-      }>(`http://localhost:8080/events?page=${page}&pageSize=${PAGE_SIZE}`)
+      }>(
+        `https://www.zenska-vizija.ba/api/events?page=${page}&pageSize=${PAGE_SIZE}`
+      )
       const processedEvents = response.data.events.map((event) => {
         const imagePaths =
           typeof event.image_paths === 'string'
@@ -101,7 +103,9 @@ const EventList: React.FC = () => {
 
   const deleteEvent = async (id: number) => {
     try {
-      await axios.delete(`http://localhost:8080/deleteEvent?id=${id}`)
+      await axios.delete(
+        `https://www.zenska-vizija.ba/api/deleteEvent?id=${id}`
+      )
       console.log(`Blog with ID ${id} deleted successfully.`)
       fetchEvents(id)
     } catch (error) {
@@ -128,7 +132,7 @@ const EventList: React.FC = () => {
             className="relative group overflow-hidden text-black bg-gray-300 min-h-[40svh] rounded-xl"
           >
             <Image
-              src={`http://localhost:8080/${event.image_paths[0]}`}
+              src={`https://www.zenska-vizija.ba/api/${event.image_paths[0]}`}
               alt={`Blog Image ${event.title}`}
               unoptimized
               className="w-full h-[30vh] object-cover bg-gray-400 rounded-t-xl"

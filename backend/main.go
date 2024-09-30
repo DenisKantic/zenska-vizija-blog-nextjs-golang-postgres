@@ -4,6 +4,7 @@ import (
 	"backend/auth"
 	"backend/createBlogPost"
 	"backend/createEventPost"
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -52,17 +53,17 @@ func setupRoutes() {
 }
 
 func main() {
-	//
-	//email := "amelahajvaz555@gmail.com"
-	//password := "amelazenskavizija1;"
-	//
-	//// Call the function to register a user manually
-	//err := RegisterUserManually(email, password)
-	//if err != nil {
-	//	fmt.Printf("Error registering user: %v\n", err)
-	//} else {
-	//	fmt.Println("User registered successfully!")
-	//}
+
+	email := "amelahajvaz555@gmail.com"
+	password := "amelazenskavizija1;"
+
+	// Call the function to register a user manually
+	err := RegisterUserManually(email, password)
+	if err != nil {
+		fmt.Printf("Error registering user: %v\n", err)
+	} else {
+		fmt.Println("User registered successfully!")
+	}
 	fmt.Println("Server is running on 8080 port")
 	setupRoutes()
 	//
@@ -74,31 +75,30 @@ func main() {
 	//log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-//
-//func RegisterUserManually(email string, password string) error {
-//	// Connect to the database
-//	db, err := dbCon()
-//	if err != nil {
-//		return fmt.Errorf("error connecting to database: %v", err)
-//	}
-//	defer db.Close()
-//
-//	// Insert user data into the database
-//	_, err = db.Exec("INSERT INTO users (email, password) VALUES ($1, $2)", email, password)
-//	if err != nil {
-//		return fmt.Errorf("error inserting user into database: %v", err)
-//	}
-//
-//	fmt.Println("User is created with email:", email)
-//	return nil
-//}
-//
-//func dbCon() (*sql.DB, error) {
-//	psqlInfo := "postgresql://zenskavizija:zenskavizija1;@postgres:5434/zenskavizijadb?sslmode=disable"
-//
-//	db, err := sql.Open("postgres", psqlInfo)
-//	if err != nil {
-//		return nil, fmt.Errorf("error opening connection: %w", err)
-//	}
-//	return db, nil
-//}
+func RegisterUserManually(email string, password string) error {
+	// Connect to the database
+	db, err := dbCon()
+	if err != nil {
+		return fmt.Errorf("error connecting to database: %v", err)
+	}
+	defer db.Close()
+
+	// Insert user data into the database
+	_, err = db.Exec("INSERT INTO users (email, password) VALUES ($1, $2)", email, password)
+	if err != nil {
+		return fmt.Errorf("error inserting user into database: %v", err)
+	}
+
+	fmt.Println("User is created with email:", email)
+	return nil
+}
+
+func dbCon() (*sql.DB, error) {
+	psqlInfo := "postgresql://zenskavizija:zenskavizija1;@postgres:5434/zenskavizijadb?sslmode=disable"
+
+	db, err := sql.Open("postgres", psqlInfo)
+	if err != nil {
+		return nil, fmt.Errorf("error opening connection: %w", err)
+	}
+	return db, nil
+}

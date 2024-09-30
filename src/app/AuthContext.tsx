@@ -38,16 +38,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const register = async (formData: FormData) => {
     try {
-      const response = await axios.post(
-        'http://localhost:3000/register',
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-          withCredentials: true,
-        }
-      )
+      const response = await axios.post('http://api/register', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        withCredentials: true,
+      })
       return response.status
     } catch (error: any) {
       console.log('error registering user', error)
@@ -59,16 +55,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     console.log('SENT FORM DATA', formData)
 
     try {
-      const response = await axios.post(
-        'http://localhost:8080/login',
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-          withCredentials: true,
-        }
-      )
+      const response = await axios.post('http://api/login', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        withCredentials: true,
+      })
 
       if (response.status === 200) {
         setIsAuthenticated(true)
@@ -85,7 +77,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logout = async () => {
     try {
-      await axios.post('http://localhost:8080/logout', null, {
+      await axios.post('http://api/logout', null, {
         withCredentials: true,
       })
       setIsAuthenticated(false)

@@ -31,7 +31,9 @@ const BlogList: React.FC = () => {
         blogs: Blog[]
         totalPages: number
         currentPage: number
-      }>(`http://localhost:8080/blogs?page=${page}&pageSize=${PAGE_SIZE}`)
+      }>(
+        `https://www.zenska-vizija.ba/api/blogs?page=${page}&pageSize=${PAGE_SIZE}`
+      )
       const processedBlogs = response.data.blogs.map((blog) => {
         const imagePaths =
           typeof blog.image_paths === 'string'
@@ -113,7 +115,7 @@ const BlogList: React.FC = () => {
             className="relative group overflow-hidden text-black bg-gray-300 h-[40svh] rounded-xl"
           >
             <Image
-              src={`http://localhost:8080/${blog.image_paths[0]}`}
+              src={`https://www.zenska-vizija.ba/api/${blog.image_paths[0]}`}
               alt={`Blog Image ${blog.title}`}
               unoptimized
               className="w-full h-[30vh] object-cover bg-gray-400 rounded-t-xl"

@@ -51,7 +51,7 @@ func dbConn() (*sql.DB, error) {
 }
 
 func UploadBlogPost(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Origin", "https://www.zenska-vizija.ba")
 	w.Header().Set("Access-Control-Allow-Methods", "POST")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
@@ -187,7 +187,7 @@ func saveFilePathToDB(filePaths string, title string, description string, slug s
 
 // GetAllBlogs handles the GET request to retrieve all blog entries
 func GetAllBlogs(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	w.Header().Set("Access-Control-Allow-Origin", "https://www.zenska-vizija.ba")
 	w.Header().Set("Access-Control-Allow-Methods", "GET")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
@@ -286,7 +286,7 @@ func GetAllBlogs(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteBlog(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	w.Header().Set("Access-Control-Allow-Origin", "https://www.zenska-vizija.ba")
 	w.Header().Set("Access-Control-Allow-Methods", "DELETE")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
@@ -353,7 +353,7 @@ func DeleteBlog(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetOneItem(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	w.Header().Set("Access-Control-Allow-Origin", "https://www.zenska-vizija.ba")
 	w.Header().Set("Access-Control-Allow-Methods", "GET")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 

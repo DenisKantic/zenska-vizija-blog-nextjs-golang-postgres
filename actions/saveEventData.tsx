@@ -31,10 +31,13 @@ export async function SaveEventToDB(formData: FormData, description: string) {
   })
 
   try {
-    const response = await fetch('http://localhost:8080/createEvent', {
-      method: 'POST',
-      body: formDataToSend,
-    })
+    const response = await fetch(
+      'https://www.zenska-vizija.ba/api/createEvent',
+      {
+        method: 'POST',
+        body: formDataToSend,
+      }
+    )
     console.log('FORM FILES FOR API', formDataToSend)
 
     // Try to parse response as JSON
